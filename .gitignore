@@ -1,0 +1,8 @@
+/target/
+/cli/target/
+/bootloader/target/
+/examples/*/target/
+/examples/.credentials/
+/examples/*/bootloader.bin
+/examples/target/
+*.swp

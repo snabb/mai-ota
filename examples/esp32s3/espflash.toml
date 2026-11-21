@@ -1,0 +1,6 @@
+# `bootloader.bin` is ESP-IDF's with app rollback, which mai-ota needs and
+# espflash's own lacks: `../../tools/esp-bootloader/build.sh esp32s3 bootloader.bin`.
+# Every flash writes it, so leaving it out would quietly replace it.
+[idf]
+partition_table = "partitions.csv"
+bootloader = "bootloader.bin"

@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  host:
+    name: Library, CLI, formatting
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: |
+            . -> target
+            cli -> target
+      - name: Formatting, every workspace
+        run: |
+          for manifest in Cargo.toml bootloader/Cargo.toml cli/Cargo.toml examples/*/Cargo.toml examples/*/bootloader/Cargo.toml; do
+            cargo fmt --manifest-path "$manifest" --check
+          done
+      - name: Library
+        run: |
+          cargo clippy --locked --all-targets --features coap,embassy-boot,log -- -D warnings
+          cargo clippy --locked --features coap,embassy-boot,defmt -- -D warnings
+          cargo test --locked --features coap,embassy-boot,log
+          RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --features coap,embassy-boot,log
+      - name: CLI
+        working-directory: cli
+        run: |
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+
+  # Each example with its bootloader: this is also what compiles the chip modules,
+  # which need a chip's target and HAL.
+  examples:
+    name: Example ${{ matrix.example }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - example: pico-w
+            target: thumbv6m-none-eabi
+            bootloader: true
+          - example: pico-2-w
+            target: thumbv8m.main-none-eabihf
+            bootloader: true
+          - example: xiao-nrf54lm20a
+            target: thumbv8m.main-none-eabihf
+            bootloader: true
+          - example: esp32c6
+            target: riscv32imac-unknown-none-elf
+            bootloader: false
+          - example: esp32s3
+            target: xtensa-esp32s3-none-elf
+            bootloader: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        if: matrix.example != 'esp32s3'
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rust-src
+          rustup target add ${{ matrix.target }}
+      # Xtensa needs Espressif's toolchain, and its linker on PATH. 1.100 is esp-hal
+      # main's MSRV, newer than the release espup takes by default.
+      - name: Install the ESP toolchain
+        if: matrix.example == 'esp32s3'
+        run: |
+          curl -LsSf https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu -o espup
+          chmod +x espup
+          ./espup install --targets esp32s3 --toolchain-version 1.100.0.0
+      # OpenThread is compiled from source with bindgen; one LLVM for clang and
+      # libclang, or bindgen cannot find the C headers.
+      - name: Pin bindgen to one LLVM
+        if: matrix.example == 'xiao-nrf54lm20a'
+        run: |
+          version=$(clang -dumpversion | cut -d. -f1)
+          sudo apt-get update
+          sudo apt-get install --yes "libclang-$version-dev"
+          echo "CLANG_PATH=$(command -v clang)" >> "$GITHUB_ENV"
+          echo "LIBCLANG_PATH=/usr/lib/llvm-$version/lib" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: examples/${{ matrix.example }} -> ../target
+          key: ${{ matrix.example }}
+      # Stand-ins for the build-time inputs: the credentials are only included as
+      # bytes, and a device built from these would refuse every client.
+      - name: Placeholder credentials
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf 'placeholder' > "$RUNNER_TEMP/keys/device.ccs"
+          printf 'placeholder' > "$RUNNER_TEMP/keys/device.cosekey"
+          printf 'placeholder' > "$RUNNER_TEMP/keys/client.ccs"
+          {
+            echo "MAI_OTA_DEVICE=$RUNNER_TEMP/keys/device"
+            echo "MAI_OTA_CLIENT=$RUNNER_TEMP/keys/client.ccs"
+            echo "WIFI_SSID=example"
+            echo "WIFI_PASSWORD=example"
+            echo "THREAD_DATASET=0e080000000000010000"
+          } >> "$GITHUB_ENV"
+      - name: Build and lint
+        working-directory: examples/${{ matrix.example }}
+        run: |
+          [ -f ~/export-esp.sh ] && . ~/export-esp.sh
+          cargo build --release --locked
+          cargo clippy --release --locked -- -D warnings
+      - name: Bootloader
+        if: matrix.bootloader
+        working-directory: examples/${{ matrix.example }}/bootloader
+        run: |
+          cargo build --release --locked
+          cargo clippy --release --locked -- -D warnings

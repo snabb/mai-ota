@@ -1,0 +1,4 @@
+# One target directory for every example workspace beneath this one, which find
+# this file by walking up from their own directory. Relative to `examples/`.
+[build]
+target-dir = "target"

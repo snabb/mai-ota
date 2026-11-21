@@ -1,0 +1,17 @@
+[package]
+name = "mai-ota-example-common"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "What every mai-ota example shares: the CoAP server with EDHOC and OSCORE, and /fw"
+publish = false
+
+# Built only as a dependency of the examples, each its own workspace.
+[workspace]
+
+[dependencies]
+mai-ota = { path = "../..", features = ["coap"] }
+mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", default-features = false, features = ["server", "block1", "edhoc", "software-crypto", "embassy-time"] }
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng"] }
+embassy-time = "0.5"
+rand_core = { version = "0.10", default-features = false }

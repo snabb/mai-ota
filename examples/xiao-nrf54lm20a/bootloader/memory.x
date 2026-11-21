@@ -1,0 +1,39 @@
+/* The XIAO nRF54LM20A's RRAM, as the bootloader sees it:
+ *
+ *   0x00000000  bootloader        24 KiB, this crate
+ *   0x00006000  bootloader state  16 KiB
+ *   0x0000A000  active image      996 KiB, what runs
+ *   0x00103000  DFU               1000 KiB, where an upload goes
+ *
+ * `../memory.x` states the same layout for the application; change both together.
+ *
+ * The state partition holds a magic and one 16-byte progress record per step of
+ * a swap: 2 + 4 x 249 pages, 15968 bytes. embassy-boot asserts that it fits.
+ */
+MEMORY
+{
+  FLASH            : ORIGIN = 0x00000000, LENGTH = 24K
+  BOOTLOADER_STATE : ORIGIN = 0x00006000, LENGTH = 16K
+  ACTIVE           : ORIGIN = 0x0000A000, LENGTH = 996K
+  DFU              : ORIGIN = 0x00103000, LENGTH = 1000K
+  RAM              : ORIGIN = 0x20000000, LENGTH = 0x7FD40
+}
+
+__bootloader_state_start = ORIGIN(BOOTLOADER_STATE);
+__bootloader_state_end = ORIGIN(BOOTLOADER_STATE) + LENGTH(BOOTLOADER_STATE);
+__bootloader_active_start = ORIGIN(ACTIVE);
+__bootloader_active_end = ORIGIN(ACTIVE) + LENGTH(ACTIVE);
+__bootloader_dfu_start = ORIGIN(DFU);
+__bootloader_dfu_end = ORIGIN(DFU) + LENGTH(DFU);
+
+/* Erased state, written by every wired flash: whatever was there before, a pending
+ * swap included, must not act on the image just flashed. */
+SECTIONS
+{
+  .bootloader_state :
+  {
+    FILL(0xFFFFFFFF);
+    LONG(0xFFFFFFFF);
+    . += LENGTH(BOOTLOADER_STATE) - 4;
+  } > BOOTLOADER_STATE
+}

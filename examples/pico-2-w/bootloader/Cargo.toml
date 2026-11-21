@@ -1,0 +1,30 @@
+# The bootloader in front of the Pico 2 W example. A workspace of its own, so that
+# it unifies no features with the application: it wants no time driver and its
+# own image definition.
+[workspace]
+
+[package]
+name = "pico-2-w-bootloader"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "mai-ota's bootloader on the Pico 2 W example's flash layout"
+publish = false
+
+[[bin]]
+name = "pico-2-w-bootloader"
+test = false
+bench = false
+
+[dependencies]
+mai-ota-bootloader = { path = "../../../bootloader", features = ["rp235xa"] }
+embassy-rp = { version = "0.10", features = ["rp235xa"] }
+cortex-m = { version = "0.7", features = ["inline-asm", "critical-section-single-core"] }
+cortex-m-rt = "0.7"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "fat"
+opt-level = "z"
+panic = "abort"

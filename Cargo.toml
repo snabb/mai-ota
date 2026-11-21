@@ -1,0 +1,99 @@
+[package]
+name = "mai-ota"
+version = "0.1.0"
+description = "A/B firmware updates for no_std embedded Rust: the new image boots on trial and rolls back unless confirmed"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/snabb/mai-ota"
+readme = "README.md"
+rust-version = "1.97"
+publish = false
+keywords = ["ota", "firmware-update", "embedded", "no-std", "rollback"]
+categories = ["embedded", "no-std"]
+# `examples/` holds firmware workspaces of their own, not examples of this crate.
+autoexamples = false
+
+[dependencies]
+embassy-futures = "0.1"
+embassy-sync = "0.8"
+embassy-time = "0.5"
+
+defmt = { version = "1", optional = true }
+log = { version = "0.4", optional = true }
+
+# `coap`: uploads over CoAP Block1, confirmed by the first OSCORE request.
+mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", optional = true, default-features = false }
+
+# `embassy-boot`: the slot behind an embassy-boot bootloader.
+embassy-boot = { version = "0.7", optional = true }
+embassy-embedded-hal = { version = "0.6", optional = true }
+embedded-storage-async = { version = "0.4", optional = true }
+
+# The chip modules. No chip feature is named on these HALs beyond what the chip
+# features below need; the firmware's own dependency on the HAL selects the rest,
+# and Cargo unifies the two.
+#
+# The ESP modules need esp-hal's word-oriented `esp_hal::flash::Flash` and the
+# esp-bootloader-esp-idf that reads partitions through it, which no release has
+# yet: a firmware patches both to esp-hal's main branch (the examples show how).
+esp-hal = { version = "~1.2.0", features = ["unstable"], optional = true }
+esp-bootloader-esp-idf = { version = "0.6.0", optional = true }
+embassy-nrf = { version = "0.11", optional = true }
+embassy-rp = { version = "0.10", optional = true }
+embassy-stm32 = { version = "0.6", optional = true }
+cortex-m = { version = "0.7", optional = true }
+
+[features]
+# The ESP modules log esp-bootloader-esp-idf's error and partition types.
+defmt = [
+    "dep:defmt",
+    "embassy-time/defmt",
+    "mai-coap?/defmt",
+    "embassy-boot?/defmt",
+    "esp-bootloader-esp-idf?/defmt",
+]
+log = ["dep:log", "mai-coap?/log", "embassy-boot?/log"]
+
+# Upload over CoAP: `coap::run`, `coap::Proving`.
+coap = [
+    "dep:mai-coap",
+    "mai-coap/server",
+    "mai-coap/block1",
+    "mai-coap/embassy-time",
+]
+
+# `embassy_boot::Slot`.
+embassy-boot = ["dep:embassy-boot", "dep:embassy-embedded-hal", "dep:embedded-storage-async"]
+
+# `esp::Slot` and `watchdog::esp`, behind ESP-IDF's bootloader.
+esp32c6 = [
+    "dep:esp-hal",
+    "dep:esp-bootloader-esp-idf",
+    "esp-hal/esp32c6",
+    "esp-bootloader-esp-idf/esp32c6",
+]
+esp32s3 = [
+    "dep:esp-hal",
+    "dep:esp-bootloader-esp-idf",
+    "esp-hal/esp32s3",
+    "esp-bootloader-esp-idf/esp32s3",
+]
+
+# `watchdog::nrf`: the nRF52840's WDT, or the nRF54LM20's WDT31.
+nrf52840 = ["dep:embassy-nrf"]
+nrf54lm20 = ["dep:embassy-nrf", "dep:cortex-m"]
+
+# `watchdog::rp`, which reads the watchdog's enable bit through the PAC.
+rp2040 = ["dep:embassy-rp", "dep:cortex-m", "embassy-rp/unstable-pac"]
+rp235xa = ["dep:embassy-rp", "dep:cortex-m", "embassy-rp/unstable-pac"]
+
+# `watchdog::stm32`: the IWDG.
+stm32 = ["dep:embassy-stm32"]
+
+# Panic a minute after the watchdog feeder starts, to test the watchdog and the
+# rollback on hardware. Never in a default set.
+watchdog-test-panic = []
+
+[dev-dependencies]
+embassy-time = { version = "0.5", features = ["mock-driver", "generic-queue-8"] }
+critical-section = { version = "1", features = ["std"] }

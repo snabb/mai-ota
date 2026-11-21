@@ -1,0 +1,38 @@
+# A workspace of its own: its chip features need a chip's target and HAL, so it builds
+# only from a firmware's bootloader binary (see `examples/*/bootloader`).
+[workspace]
+
+[package]
+name = "mai-ota-bootloader"
+version = "0.1.0"
+description = "embassy-boot bootloaders for mai-ota, with a watchdog on trial boots"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/snabb/mai-ota"
+rust-version = "1.97"
+publish = false
+keywords = ["ota", "bootloader", "embedded", "no-std", "rollback"]
+categories = ["embedded", "no-std"]
+
+[features]
+# One chip. The binary's own dependency on the HAL names the chip variant
+# (`embassy-nrf/nrf54lm20-app-s`, `embassy-rp/rp2040`, ...); Cargo unifies the two.
+nrf54lm20 = ["dep:embassy-nrf", "mai-ota/nrf54lm20"]
+# Not `mai-ota/rp*`: the bootloader needs only the timeout, and stays on embassy-rp
+# 0.10's API, which the application's watchdog module has moved past.
+rp2040 = ["dep:embassy-rp"]
+rp235xa = ["dep:embassy-rp"]
+
+[dependencies]
+# The application's watchdog settings, which the bootloader must start it with.
+mai-ota = { path = ".." }
+# The version mai-ota's `embassy-boot` feature uses: the two ends share the state
+# partition's format.
+embassy-boot = "0.7"
+embassy-sync = "0.8"
+embedded-storage = "0.3"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+embassy-nrf = { version = "0.11", optional = true }
+# `unstable-pac`: the RP2040's watchdog tick.
+embassy-rp = { version = "0.10", optional = true, features = ["unstable-pac"] }

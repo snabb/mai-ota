@@ -1,0 +1,11 @@
+[target."thumbv8m.main-none-eabihf"]
+runner = "probe-rs run --chip nRF54LM20A"
+
+[build]
+target = "thumbv8m.main-none-eabihf"
+
+[env]
+DEFMT_LOG = "info"
+# Holds the whole boot until a probe attaches: in non-blocking mode a full buffer
+# drops what comes next.
+DEFMT_RTT_BUFFER_SIZE = "16384"

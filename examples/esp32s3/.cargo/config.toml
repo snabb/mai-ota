@@ -1,0 +1,16 @@
+[target.xtensa-esp32s3-none-elf]
+# `--erase-parts otadata`: espflash writes `ota_0`, and the bootloader would
+# otherwise keep booting whatever `otadata` last selected.
+runner = "espflash flash --monitor --chip esp32s3 --erase-parts otadata"
+
+[build]
+# No `-C force-frame-pointers`: the Xtensa backend miscompiles P-256 and HKDF with
+# it, and EDHOC then fails.
+target = "xtensa-esp32s3-none-elf"
+
+[env]
+ESP_LOG = "info"
+
+[unstable]
+# Xtensa has no precompiled `core` or `alloc`; the Wi-Fi driver allocates.
+build-std = ["core", "alloc"]

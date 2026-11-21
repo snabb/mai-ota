@@ -1,0 +1,77 @@
+[package]
+name = "pico-2-w"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "mai-ota example for the Raspberry Pi Pico 2 W: firmware updates over Wi-Fi"
+publish = false
+build = "../rp/build.rs"
+
+[workspace]
+
+[[bin]]
+name = "pico-2-w"
+path = "../rp/main.rs"
+test = false
+bench = false
+
+[features]
+default = ["rp235xa"]
+rp2040 = []
+rp235xa = []
+
+[dependencies]
+mai-ota = { path = "../..", features = ["coap", "embassy-boot", "rp235xa", "defmt"] }
+mai-ota-example-common = { path = "../common" }
+mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", default-features = false, features = ["embassy-net-xarxa-ipv4", "embassy-net-xarxa-ipv6", "defmt"] }
+
+# One Embassy revision for everything, the one mai-ota and mai-coap are tested with.
+embassy-rp = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa", features = [
+    "rp235xa",
+    "critical-section-impl",
+    "time-driver",
+    "unstable-pac",
+    "defmt",
+] }
+embassy-executor = { version = "0.10", features = ["platform-cortex-m", "executor-thread", "defmt"] }
+embassy-time = { version = "0.5", features = ["defmt"] }
+embassy-sync = "0.8"
+embassy-net = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa", features = [
+    "ipv4",
+    "ipv6",
+    "dhcpv4",
+    "slaac",
+    "medium-ethernet",
+    "iface-bind",
+    # xarxa answers ping only with this.
+    "icmp-ping-reply",
+    "defmt",
+] }
+cyw43 = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa", features = ["defmt"] }
+cyw43-pio = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa", features = ["defmt"] }
+cortex-m = { version = "0.7", features = ["inline-asm"] }
+cortex-m-rt = "0.7"
+defmt = "1"
+# Not blocking: with no probe attached, a full buffer must not stop the firmware.
+defmt-rtt = { version = "1", features = ["disable-blocking-mode"] }
+panic-probe = { version = "1", features = ["print-defmt"] }
+rand_core = { version = "0.10", default-features = false }
+static_cell = "2.1"
+
+# Git Embassy's crates name each other by path; these keep one copy of each in the
+# graph, whether a crate asks for it from Git or from crates.io.
+[patch."https://github.com/embassy-rs/embassy.git"]
+embassy-futures = { version = "=0.1.2" }
+embassy-time = { version = "=0.5.1" }
+embassy-time-driver = { version = "=0.2.2" }
+embassy-time-queue-utils = { version = "=0.3.2" }
+embassy-usb-driver = { version = "=0.2.2" }
+
+[patch.crates-io]
+embassy-rp = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "fat"
+opt-level = "s"

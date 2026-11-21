@@ -1,0 +1,32 @@
+[package]
+name = "mai-ota-cli"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+description = "Uploads firmware to a mai-ota device over CoAP and OSCORE, and checks that it stays"
+repository = "https://github.com/snabb/mai-ota"
+publish = false
+
+[[bin]]
+name = "mai-ota"
+path = "src/main.rs"
+
+# A host tool: kept out of the library's no_std build.
+[workspace]
+
+[dependencies]
+# The revision the library's `coap` feature uses.
+mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", features = ["std", "client", "block1", "edhoc", "software-crypto", "log"] }
+async-io = "2.6.0"
+clap = { version = "4.6.9", features = ["derive"] }
+futures-lite = "2.6.1"
+log = "0.4.35"
+minicbor = "2.3.1"
+object = { version = "0.41.0", default-features = false, features = ["read_core", "elf", "std"] }
+rand = "0.10.4"
+tempfile = "3.27.0"
+zeroize = "1.9.2"
+
+[lints.rust]
+unsafe_code = "forbid"
