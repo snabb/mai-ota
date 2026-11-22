@@ -11,7 +11,7 @@ says otherwise.
 | [Embassy](https://github.com/embassy-rs/embassy) nRF and RP bootloaders | MIT OR Apache-2.0 | `bootloader/src/{lib,nrf54l,rp}.rs`, `examples/pico-2-w/bootloader/memory.x` |
 | [Embassy](https://github.com/embassy-rs/embassy) RP examples | MIT OR Apache-2.0 | `examples/rp/main.rs`, `examples/pico-2-w/memory.x` |
 | [nrf-802154](https://github.com/sysgrok/nrf-802154) `scrub_grtc` | MIT OR Apache-2.0 | `examples/nrf54l/main.rs` |
-| [openthread](https://github.com/esp-rs/openthread) `enet` module | MIT OR Apache-2.0 | `examples/nrf54l/enet.rs` |
+| [openthread](https://github.com/esp-rs/openthread) `enet` module | MIT OR Apache-2.0 | `examples/common/src/enet.rs` |
 | [mai-coap](https://github.com/snabb/mai-coap) CLI credentials | MIT OR Apache-2.0 | `cli/src/credentials.rs` |
 | [Infineon CYW43439 firmware](https://github.com/embassy-rs/embassy/tree/main/cyw43-firmware) | Infineon Permissive Binary License 1.0 | `examples/rp/cyw43-firmware/` |
 
@@ -58,7 +58,7 @@ to disable the compare channels as well.
 
 ## openthread — `enet` module
 
-Copyright (c) the esp-rs contributors. `examples/nrf54l/enet.rs` is
+Copyright (c) the esp-rs contributors. `examples/common/src/enet.rs` is
 adapted from `src/enet.rs` in `openthread` 0.4.0, and modified for the
 `embassy-net-driver-channel` from Git, which lends the runner a buffer from the
 stack's packet pool.
