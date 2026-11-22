@@ -2,8 +2,9 @@
 // Copyright (C) 2026 mai-ota contributors
 // Copyright (c) nrf-sdc project contributors (`scrub_grtc` only)
 
-//! mai-ota on a Seeed XIAO nRF54LM20A: joins a Thread network and takes firmware
-//! on `coap://[<address>]/fw`, behind the bootloader in `bootloader/`.
+//! mai-ota on a Seeed XIAO nRF54LM20A or nRF54L15: joins a Thread network and
+//! takes firmware on `coap://[<address>]/fw`, behind the bootloader in each
+//! example's `bootloader/`.
 //!
 //! [`scrub_grtc`] is adapted from `scrub_grtc` in `tests/src/lib.rs` in
 //! [nrf-802154](https://github.com/sysgrok/nrf-802154) (copyright nrf-sdc project

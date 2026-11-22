@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright (C) 2026 mai-ota contributors
 
-//! The XIAO nRF54LM20A example's build script: the linker scripts, the
+//! The XIAO nRF54 examples' build script: the linker scripts, the
 //! credentials, the Thread network and the version, all fixed at build time.
 //!
 //! | Variable | |
@@ -30,5 +30,5 @@ fn main() {
         .expect("THREAD_DATASET is hex");
     fs::write(out.join("dataset.bin"), dataset).unwrap();
 
-    version(&["src"]);
+    version(&["../nrf54l"]);
 }

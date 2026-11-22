@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright (C) 2026 mai-ota contributors
 
-//! The nRF52840's WDT, or the nRF54LM20's WDT31, for [`watchdog`](super). Once
-//! started it runs until the next reset.
+//! The nRF52840's WDT, or the nRF54L15's or nRF54LM20's WDT31, for
+//! [`watchdog`](super). Once started it runs until the next reset.
 //!
-//! On the nRF54LM20, embassy-nrf names WDT31 `WDT0` in a secure build; `WDT1` is
+//! On the nRF54L, embassy-nrf names WDT31 `WDT0` in a secure build; `WDT1` is
 //! WDT30, which is secure-only.
 
 use embassy_nrf::Peri;
@@ -14,21 +14,21 @@ use super::TIMEOUT;
 
 #[cfg(feature = "nrf52840")]
 type Wdt = embassy_nrf::peripherals::WDT;
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 type Wdt = embassy_nrf::peripherals::WDT0;
 
 // Registers, secure aliases, written directly rather than through embassy-nrf's
 // `pac`, which needs its `unstable-pac` feature.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 const WDT30: usize = 0x5010_8000;
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 const RESETREAS: *mut u32 = 0x5010_E600 as *mut u32;
 /// `POWER.GPREGRET[1]`, which a watchdog reset keeps. `[0]` is left to bootloaders,
 /// which commonly use it.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 const GPREGRET1: *mut u32 = 0x5010_E504 as *mut u32;
 /// In [`GPREGRET1`]: the last watchdog reset was [`reset_chip`]'s.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 const DELIBERATE: u32 = 0x4d;
 
 /// Reset the whole chip, as a watchdog timeout does: through WDT30, which nothing
@@ -40,7 +40,7 @@ const DELIBERATE: u32 = 0x4d;
 /// busy. The reboot into an uploaded image is such a reset, so the image on trial
 /// panicked at boot and was rolled back. A watchdog reset resets them as a pin
 /// reset does. [`after_watchdog_reset`] tells this one from a real timeout.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 pub fn reset_chip() -> ! {
     // SAFETY: WDT30 is unused, and writing its registers only arms it; the marker
     // register is general purpose.
@@ -62,7 +62,7 @@ pub fn reset_chip() -> ! {
 
 /// Whether the last reset was [`reset_chip`]'s, which the reset reasons show as a
 /// watchdog's. Clears the mark, so ask once per boot, early.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 pub fn deliberate_reset() -> bool {
     // SAFETY: the marker register is read and cleared here alone.
     unsafe {
@@ -76,7 +76,7 @@ pub fn deliberate_reset() -> bool {
 /// Clears the reset reasons, which accumulate across resets, so the next boot
 /// reads its own, and [`deliberate_reset`]'s mark; call it once, early, instead of
 /// both.
-#[cfg(feature = "nrf54lm20")]
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
 pub fn after_watchdog_reset() -> bool {
     // SAFETY: the reset reasons are read and cleared here alone.
     let reasons = unsafe {
@@ -146,10 +146,10 @@ impl super::Watchdog for Watchdog {
     fn feed(&mut self) {
         if let Some(handle) = &mut self.handle {
             // `pet` in embassy-nrf 0.11.0, `feed` in later git revisions, which the
-            // nRF54LM20 needs.
+            // nRF54L needs.
             #[cfg(feature = "nrf52840")]
             handle.pet();
-            #[cfg(feature = "nrf54lm20")]
+            #[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
             handle.feed();
         }
     }

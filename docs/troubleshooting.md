@@ -87,7 +87,7 @@ The Cortex-M magic cannot change for devices in the field; see
   solicitation at once; DHCPv4 worked. The examples use embassy-net from Git
   (xarxa), which forms the address within seconds.
 
-## nRF54LM20A
+## nRF54L
 
 * **An update rolls back about half the time, and the image on trial logs
   `panicked at 'MultiprotocolServiceLayer: 106:179'`** right after arming the

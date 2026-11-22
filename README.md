@@ -19,12 +19,14 @@ with EDHOC and OSCORE ([mai-coap](https://github.com/snabb/mai-coap)).
 | --- | --- | --- | --- |
 | ESP32-C6 | ESP-IDF's, with app rollback | Wi-Fi | ~29 KiB/s (1 MiB in ~35 s) |
 | ESP32-S3 | ESP-IDF's, with app rollback | Wi-Fi | ~23 KiB/s (1 MiB in ~45 s) |
+| nRF54L15 | `mai-ota-bootloader` (embassy-boot) | Thread | ~2.6 KiB/s (1 MiB in ~7 min) |
 | nRF54LM20A | `mai-ota-bootloader` (embassy-boot) | Thread | ~1.7 KiB/s (1 MiB in ~10 min) |
 | RP2040 (Pico W) | `mai-ota-bootloader` (embassy-boot) | Wi-Fi | ~17 KiB/s (1 MiB in ~1 min) |
 | RP2350 (Pico 2 W) | `mai-ota-bootloader` (embassy-boot) | Wi-Fi | ~18 KiB/s (1 MiB in ~1 min) |
 
 Measured with the examples and the CLI's default 1024-byte blocks, not counting
-the reboot and confirmation afterwards.
+the reboot and confirmation afterwards. The 1 MiB times are extrapolated from the
+rate.
 
 The nRF52840 and STM32 have watchdog modules only: there is no bootloader or
 example for them.
@@ -102,9 +104,9 @@ mai-ota = { git = "https://github.com/snabb/mai-ota.git", rev = "…", features 
 | Feature | Enables |
 | --- | --- |
 | `coap` | `coap::{Resource, Proving, run}`: uploads over mai-coap |
-| `embassy-boot` | `embassy_boot::{ota, Slot}`, for nRF54LM20A and RP2040/RP2350 |
+| `embassy-boot` | `embassy_boot::{ota, Slot}`, for nRF54L15, nRF54LM20A and RP2040/RP2350 |
 | `esp32c6`, `esp32s3` | `esp::{ota, Slot}` and `watchdog::esp` |
-| `nrf52840`, `nrf54lm20` | `watchdog::nrf` |
+| `nrf52840`, `nrf54l15`, `nrf54lm20` | `watchdog::nrf`; on the nRF54L, with embassy-nrf's secure chip feature (`nrf54l15-app-s`, `nrf54lm20-app-s`) |
 | `rp2040`, `rp235xa` | `watchdog::rp` |
 | `stm32` | `watchdog::stm32` |
 | `log`, `defmt` | logging through either |

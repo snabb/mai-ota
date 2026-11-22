@@ -22,7 +22,7 @@ embassy-nrf = { version = "0.11", features = ["nrf54lm20-app-s"] }
 cortex-m = { version = "0.7", features = ["inline-asm", "critical-section-single-core"] }
 cortex-m-rt = "0.7"
 
-# As the application's: the nRF54LM20 needs embassy-nrf from Git, and the family
+# As the application's: the nRF54L needs embassy-nrf from Git, and the family
 # goes together.
 [patch.crates-io]
 embassy-nrf = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }

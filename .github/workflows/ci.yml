@@ -67,6 +67,9 @@ jobs:
           - example: pico-2-w
             target: thumbv8m.main-none-eabihf
             bootloader: true
+          - example: xiao-nrf54l15
+            target: thumbv8m.main-none-eabihf
+            bootloader: true
           - example: xiao-nrf54lm20a
             target: thumbv8m.main-none-eabihf
             bootloader: true
@@ -96,7 +99,7 @@ jobs:
       # OpenThread is compiled from source with bindgen; one LLVM for clang and
       # libclang, or bindgen cannot find the C headers.
       - name: Pin bindgen to one LLVM
-        if: matrix.example == 'xiao-nrf54lm20a'
+        if: startsWith(matrix.example, 'xiao-nrf54')
         run: |
           version=$(clang -dumpversion | cut -d. -f1)
           sudo apt-get update

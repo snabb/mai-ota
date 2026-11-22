@@ -1,0 +1,37 @@
+# The bootloader in front of the XIAO nRF54L15 example. A workspace of its own,
+# so that it unifies no features with the application: it wants no time driver,
+# and the critical section from `cortex-m` rather than MPSL.
+[workspace]
+
+[package]
+name = "xiao-nrf54l15-bootloader"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "mai-ota's bootloader on the XIAO nRF54L15 example's RRAM layout"
+publish = false
+
+[[bin]]
+name = "xiao-nrf54l15-bootloader"
+test = false
+bench = false
+
+[dependencies]
+mai-ota-bootloader = { path = "../../../bootloader", features = ["nrf54l15"] }
+embassy-nrf = { version = "0.11", features = ["nrf54l15-app-s"] }
+cortex-m = { version = "0.7", features = ["inline-asm", "critical-section-single-core"] }
+cortex-m-rt = "0.7"
+
+# As the application's: the nRF54L needs embassy-nrf from Git, and the family
+# goes together.
+[patch.crates-io]
+embassy-nrf = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "fat"
+opt-level = "z"
+panic = "abort"

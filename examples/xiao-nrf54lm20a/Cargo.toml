@@ -5,11 +5,13 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "mai-ota example for the Seeed XIAO nRF54LM20A: firmware updates over Thread"
 publish = false
+build = "../nrf54l/build.rs"
 
 [workspace]
 
 [[bin]]
 name = "xiao-nrf54lm20a"
+path = "../nrf54l/main.rs"
 test = false
 bench = false
 
@@ -65,7 +67,7 @@ heapless = "0.9"
 rand_core = { version = "0.10", default-features = false }
 static_cell = "2.1"
 
-# Git rather than the released 0.11.0: the nRF54LM20 needs fixes since (the CRACEN
+# Git rather than the released 0.11.0: the nRF54L needs fixes since (the CRACEN
 # generator, GRTC channel 11 for MPSL). The family together, so the graph has one
 # `embassy-time`; the revision mai-coap and mai-ota are tested with.
 [patch.crates-io]

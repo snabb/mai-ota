@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 # Copyright (C) 2026 mai-ota contributors
 #
-# Start an embassy-boot swap on a running nRF54LM20A over SWD, without an upload:
+# Start an embassy-boot swap on a running nRF54L over SWD, without an upload:
 # write ELF's image into the DFU partition, mark the state partition SWAP while
 # the application runs, then reset the chip the way the application would, and
 # watch the bootloader swap it in.
@@ -13,7 +13,7 @@
 # wdt:  a WDT30 timeout after about 1 ms.
 #
 # STATE_ADDR and DFU_ADDR are the state and DFU partitions (default 0x6000 and
-# 0x103000, the examples' layout). The image is written each time because after a
+# the example's DFU start for CHIP). The image is written each time because after a
 # swap the DFU partition holds the previous image one page further on, the layout
 # a revert reads, and swapping that in again boots garbage.
 set -euo pipefail
@@ -25,12 +25,18 @@ fi
 probe=$1
 elf=$2
 how=$3
+# CHIP picks the chip, nRF54LM20A by default; the defaults below are the
+# examples' layout on it.
+chip=${CHIP:-nRF54LM20A}
+case $chip in
+nRF54LM20A) RRAMC=0x5004E000 default_dfu=0x103000 ram_end=0x2007FD40 ;;
+nRF54L15) RRAMC=0x5004B000 default_dfu=0xC3000 ram_end=0x2003FE00 ;;
+*) echo "CHIP: nRF54LM20A or nRF54L15, not $chip" >&2; exit 2 ;;
+esac
 state=${4:-0x6000}
-dfu=${5:-0x103000}
+dfu=${5:-$default_dfu}
 case $how in soft | wdt) ;; *) echo "soft or wdt, not $how" >&2; exit 2 ;; esac
 [[ -f $elf ]] || { echo "$elf: no such file" >&2; exit 2; }
-chip=nRF54LM20A
-RRAMC=0x5004E000
 WDT30=0x50108000
 
 w() { probe-rs write --chip $chip --probe "$probe" b32 "$@" >/dev/null; }
@@ -54,6 +60,13 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 objcopy=$(find "$(rustc --print sysroot)" -name llvm-objcopy | head -1)
 "$objcopy" -O binary -R .bootloader_state "$elf" "$tmp/image.bin"
+# Both chips' examples link at 0xA000; only the initial stack pointer tells an
+# image for the other chip apart.
+sp=$(od -An -tx4 -N4 "$tmp/image.bin" | tr -d ' ')
+if (( 16#$sp <= 0x20000000 || 16#$sp > ram_end )); then
+    echo "$elf: initial stack pointer 0x$sp is outside $chip's RAM" >&2
+    exit 2
+fi
 probe-rs download --chip $chip --probe "$probe" --binary-format bin \
     --base-address "$dfu" "$tmp/image.bin" > "$tmp/download.log" 2>&1 ||
     { cat "$tmp/download.log" >&2; exit 1; }
@@ -85,13 +98,16 @@ esac
 # Uptime from the GRTC, and which vector table runs: 0 is the bootloader.
 # Until the application has run for 5 s, or 120 s at most.
 start=$(date +%s)
+ok=
 while (( $(date +%s) - start < 120 )); do
     up=$(r 0x500E2720 2>/dev/null || echo "noaccess")
     vtor=$(r 0xE000ED08 2>/dev/null || echo "noaccess")
     echo "$(( $(date +%s) - start ))s up=$up vtor=$vtor"
     if [[ $vtor != *00000000* && $vtor != noaccess && $(( 16#${up// /} )) -gt 5000000 ]]; then
+        ok=1
         break
     fi
     sleep 1
 done
 echo "state: $(r "$state" 5)"
+[[ $ok ]] || { echo "the application did not come up within 120 s" >&2; exit 1; }

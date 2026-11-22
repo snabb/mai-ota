@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 # Copyright (C) 2026 mai-ota contributors
 #
-# Start a swap over SWD on a running nRF54LM20A example, as tools/nrf54-swap-test.sh
+# Start a swap over SWD on a running nRF54L example, as tools/nrf54-swap-test.sh
 # does, while a client asks for /fw from the moment of the reset, the way the CLI
 # does after an upload. The first answer from the image on trial confirms it. Logs
 # the trial image's console, and prints which image answered.
@@ -37,10 +37,16 @@ watch=${6:-0}
 case $how in soft | wdt) ;; *) echo "soft or wdt, not $how" >&2; exit 2 ;; esac
 case $watch in none | halt | [0-9]*) ;; *) echo "SECONDS, none or halt, not $watch" >&2; exit 2 ;; esac
 [[ -f $elf ]] || { echo "$elf: no such file" >&2; exit 2; }
-chip=nRF54LM20A
-RRAMC=0x5004E000
+# CHIP picks the chip, nRF54LM20A by default; the defaults below are the
+# examples' layout on it.
+chip=${CHIP:-nRF54LM20A}
+case $chip in
+nRF54LM20A) RRAMC=0x5004E000 default_dfu=0x103000 ram_end=0x2007FD40 ;;
+nRF54L15) RRAMC=0x5004B000 default_dfu=0xC3000 ram_end=0x2003FE00 ;;
+*) echo "CHIP: nRF54LM20A or nRF54L15, not $chip" >&2; exit 2 ;;
+esac
 state=0x6000
-dfu=0x103000
+dfu=$default_dfu
 
 w() { probe-rs write --chip $chip --probe "$probe" b32 "$@" >/dev/null; }
 # Nothing is written while a swap is pending or the running image is on trial: the
@@ -61,6 +67,13 @@ mkdir -p "$out"
 chmod 700 "$out"
 objcopy=$(find "$(rustc --print sysroot)" -name llvm-objcopy | head -1)
 "$objcopy" -O binary -R .bootloader_state "$elf" "$out/trial.bin"
+# Both chips' examples link at 0xA000; only the initial stack pointer tells an
+# image for the other chip apart.
+sp=$(od -An -tx4 -N4 "$out/trial.bin" | tr -d ' ')
+if (( 16#$sp <= 0x20000000 || 16#$sp > ram_end )); then
+    echo "$elf: initial stack pointer 0x$sp is outside $chip's RAM" >&2
+    exit 2
+fi
 probe-rs download --chip $chip --probe "$probe" --binary-format bin \
     --base-address $dfu "$out/trial.bin" > "$out/download.log" 2>&1
 # Resume, should the download have left the core halted: WDT30 pauses while it is.
@@ -99,10 +112,27 @@ end=$(( $(date +%s) + 300 ))
 (while (( $(date +%s) < end )); do
     echo "$(date +%T) $(timeout 4 "${ask[@]}" 2>&1 | tail -1)"
 done > "$out/cli.log") &
+poller=$!
 
-# The swap takes a minute or more; then catch the trial image from its first line.
-sleep 45
-until [ "$(vtor)" = "0000a000" ]; do :; done
+# Until VTOR reads 0xA000 (`at`) or anything else (`away`). The previous image runs
+# from 0xA000 too, so the trial image is caught by first seeing that one go: VTOR
+# reads 0 in the bootloader, and nothing while the swap's RRAM writes hold the bus.
+await() {
+    while :; do
+        v=$(vtor || true)
+        if [[ $1 == at && $v == 0000a000 || $1 == away && $v != 0000a000 ]]; then
+            return
+        fi
+        if (( $(date +%s) >= end )); then
+            echo "timed out waiting for VTOR to read $1 from 0xA000" >&2
+            kill $poller || true
+            exit 1
+        fi
+        sleep 0.2
+    done
+}
+await away
+await at
 echo "trial image runs $(date +%T)"
 if [ "$watch" = halt ]; then
     # Each gdb connection halts the core and its detach resumes it.

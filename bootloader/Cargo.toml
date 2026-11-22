@@ -17,6 +17,7 @@ categories = ["embedded", "no-std"]
 [features]
 # One chip. The binary's own dependency on the HAL names the chip variant
 # (`embassy-nrf/nrf54lm20-app-s`, `embassy-rp/rp2040`, ...); Cargo unifies the two.
+nrf54l15 = ["dep:embassy-nrf", "mai-ota/nrf54l15"]
 nrf54lm20 = ["dep:embassy-nrf", "mai-ota/nrf54lm20"]
 # Not `mai-ota/rp*`: the bootloader needs only the timeout, and stays on embassy-rp
 # 0.10's API, which the application's watchdog module has moved past.

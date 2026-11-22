@@ -8,10 +8,10 @@ says otherwise.
 | Upstream | Licence | Where it lands here |
 | --- | --- | --- |
 | [embassy-sync](https://github.com/embassy-rs/embassy) `fmt.rs` | MIT OR Apache-2.0 | `src/fmt.rs` |
-| [Embassy](https://github.com/embassy-rs/embassy) nRF and RP bootloaders | MIT OR Apache-2.0 | `bootloader/src/{lib,nrf54lm20,rp}.rs`, `examples/pico-2-w/bootloader/memory.x` |
+| [Embassy](https://github.com/embassy-rs/embassy) nRF and RP bootloaders | MIT OR Apache-2.0 | `bootloader/src/{lib,nrf54l,rp}.rs`, `examples/pico-2-w/bootloader/memory.x` |
 | [Embassy](https://github.com/embassy-rs/embassy) RP examples | MIT OR Apache-2.0 | `examples/rp/main.rs`, `examples/pico-2-w/memory.x` |
-| [nrf-802154](https://github.com/sysgrok/nrf-802154) `scrub_grtc` | MIT OR Apache-2.0 | `examples/xiao-nrf54lm20a/src/main.rs` |
-| [openthread](https://github.com/esp-rs/openthread) `enet` module | MIT OR Apache-2.0 | `examples/xiao-nrf54lm20a/src/enet.rs` |
+| [nrf-802154](https://github.com/sysgrok/nrf-802154) `scrub_grtc` | MIT OR Apache-2.0 | `examples/nrf54l/main.rs` |
+| [openthread](https://github.com/esp-rs/openthread) `enet` module | MIT OR Apache-2.0 | `examples/nrf54l/enet.rs` |
 | [mai-coap](https://github.com/snabb/mai-coap) CLI credentials | MIT OR Apache-2.0 | `cli/src/credentials.rs` |
 | [Infineon CYW43439 firmware](https://github.com/embassy-rs/embassy/tree/main/cyw43-firmware) | Infineon Permissive Binary License 1.0 | `examples/rp/cyw43-firmware/` |
 
@@ -25,7 +25,7 @@ original to this repository.
 
 Copyright Embassy project contributors.
 
-`bootloader/src/nrf54lm20.rs` is adapted from
+`bootloader/src/nrf54l.rs` is adapted from
 `examples/boot/bootloader/nrf/src/main.rs` in Embassy and from
 `embassy-boot-nrf`'s `WatchdogFlash` and `BootLoader::load`, at revision
 `2caf10d20c7e9962d627b91f2aebdeeca3790035`. `bootloader/src/rp.rs` is adapted
@@ -52,13 +52,13 @@ sections of `examples/pico-2-w/memory.x` are adapted from
 ## nrf-802154 — `scrub_grtc`
 
 Copyright (c) nrf-sdc project contributors. `scrub_grtc` in
-`examples/xiao-nrf54lm20a/src/main.rs` is adapted from `scrub_grtc` in
+`examples/nrf54l/main.rs` is adapted from `scrub_grtc` in
 `tests/src/lib.rs` in nrf-802154, with its documentation rewritten, and modified
 to disable the compare channels as well.
 
 ## openthread — `enet` module
 
-Copyright (c) the esp-rs contributors. `examples/xiao-nrf54lm20a/src/enet.rs` is
+Copyright (c) the esp-rs contributors. `examples/nrf54l/enet.rs` is
 adapted from `src/enet.rs` in `openthread` 0.4.0, and modified for the
 `embassy-net-driver-channel` from Git, which lends the runner a buffer from the
 stack's packet pool.

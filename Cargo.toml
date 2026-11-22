@@ -79,8 +79,9 @@ esp32s3 = [
     "esp-bootloader-esp-idf/esp32s3",
 ]
 
-# `watchdog::nrf`: the nRF52840's WDT, or the nRF54LM20's WDT31.
+# `watchdog::nrf`: the nRF52840's WDT, or the nRF54L's WDT31.
 nrf52840 = ["dep:embassy-nrf"]
+nrf54l15 = ["dep:embassy-nrf", "dep:cortex-m"]
 nrf54lm20 = ["dep:embassy-nrf", "dep:cortex-m"]
 
 # `watchdog::rp`, which reads the watchdog's enable bit through the PAC.

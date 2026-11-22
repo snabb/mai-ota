@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright (C) 2026 mai-ota contributors
 
-//! The XIAO nRF54LM20A example's bootloader: [`mai_ota_bootloader::nrf54lm20`] on
+//! The XIAO nRF54LM20A example's bootloader: [`mai_ota_bootloader::nrf54l`] on
 //! the partitions in `memory.x`.
 
 #![no_std]
@@ -9,5 +9,5 @@
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    mai_ota_bootloader::nrf54lm20::run()
+    mai_ota_bootloader::nrf54l::run()
 }

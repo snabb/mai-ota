@@ -24,7 +24,7 @@ firmware per chip family.
 
 - **RP and nRF54:** mai-ota's chip modules follow Embassy's Git revision
   `8a940dab0d56a910277b816987e45315ca7979aa`, which mai-coap's xarxa adapters
-  also use: the RP watchdog uses embassy-rp's `Watchdog<'d>`, and the nRF54LM20
+  also use: the RP watchdog uses embassy-rp's `Watchdog<'d>`, and the nRF54L
   needs embassy-nrf from Git. Patch the Embassy crates to that revision, as
   `examples/pico-w/Cargo.toml` and `examples/xiao-nrf54lm20a/Cargo.toml` do.
   `mai-ota-bootloader`'s RP module uses released embassy-rp 0.10; its nRF54
@@ -36,7 +36,7 @@ firmware per chip family.
   main (`examples/esp32c6/Cargo.toml`) that also carries esp-radio changes they
   need for their network stack.
 
-## Behind embassy-boot (nRF54LM20A, RP2040, RP2350)
+## Behind embassy-boot (nRF54L15, nRF54LM20A, RP2040, RP2350)
 
 ### Flash layout
 
@@ -54,6 +54,9 @@ Both linker scripts define `__bootloader_{state,active,dfu}_{start,end}` as
 offsets into the flash as its driver addresses it: from 0 on the nRF54, from the
 start of XIP flash on the RP parts. `embassy_boot::ota` takes the address where
 offset 0 is mapped (`0` on the nRF54, `embassy_rp::flash::FLASH_BASE` on the RP).
+
+On the nRF54L, `RAM` stops short of the reserved top: `LENGTH = 0x3FE00` on the
+nRF54L15, `0x7FD40` on the nRF54LM20A. A stack placed there faults at boot.
 
 Both linker scripts also fill the state region with erased bytes, in a
 `.bootloader_state` section with a memory region of its own. Every wired flash
@@ -102,7 +105,7 @@ application:
 ```rust
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    mai_ota_bootloader::rp::run::<{ 2 * 1024 * 1024 }>() // or nrf54lm20::run()
+    mai_ota_bootloader::rp::run::<{ 2 * 1024 * 1024 }>() // or nrf54l::run()
 }
 ```
 
@@ -126,9 +129,9 @@ let ota = mai_ota::embassy_boot::ota(
 The flash is any async `NorFlash`. On the nRF54 with MPSL running, that is
 `nrf_mpsl::Flash`, because MPSL arbitrates the RRAM. `reboot` must reset the
 whole chip: `watchdog::rp::reset_chip` on the RP parts (`SCB::sys_reset` resets
-only the RP2040's cores), `watchdog::nrf::reset_chip` on the nRF54LM20A (after a
+only the RP2040's cores), `watchdog::nrf::reset_chip` on the nRF54L (after a
 plain `SCB::sys_reset` MPSL's initialisation can assert; see
-[troubleshooting](troubleshooting.md#nrf54lm20a)).
+[troubleshooting](troubleshooting.md#nrf54l)).
 
 ### The watchdog
 
@@ -146,7 +149,7 @@ mai_ota::watchdog::run(watchdog, after_watchdog_reset, events).await
 (`WATCHDOG.reason().read().timer()` on the RP parts, see `examples/rp/main.rs`).
 A boot after a watchdog reset leaves the watchdog unarmed for
 `DEFER_AFTER_RECOVERY` (10 minutes), so a fault that recurs at boot does not
-loop. On the nRF54LM20A take it from `watchdog::nrf::after_watchdog_reset()`,
+loop. On the nRF54L take it from `watchdog::nrf::after_watchdog_reset()`,
 which does not count `reset_chip`'s own watchdog reset. On the nRF54,
 `Watchdog::new` adopts the running watchdog only if its configuration matches
 `watchdog::nrf::config()`, which the bootloader's does.

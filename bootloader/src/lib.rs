@@ -29,8 +29,8 @@
 
 #![no_std]
 
-#[cfg(feature = "nrf54lm20")]
-pub mod nrf54lm20;
+#[cfg(any(feature = "nrf54l15", feature = "nrf54lm20"))]
+pub mod nrf54l;
 #[cfg(any(feature = "rp2040", feature = "rp235xa"))]
 pub mod rp;
 

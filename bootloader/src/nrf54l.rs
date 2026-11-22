@@ -2,8 +2,9 @@
 // Copyright (C) 2026 mai-ota contributors
 // Copyright (c) Embassy project contributors
 
-//! The nRF54LM20's bootloader, on its RRAM. It touches no peripheral but the RRAM
-//! controller and the watchdog (WDT31, embassy-nrf's `WDT0` in a secure build).
+//! The nRF54L15's and nRF54LM20's bootloader, on their RRAM. It touches no
+//! peripheral but the RRAM controller and the watchdog (WDT31, embassy-nrf's `WDT0`
+//! in a secure build).
 
 use embassy_boot::AlignedBuffer;
 use embassy_nrf::peripherals::{RRAMC, WDT0};
