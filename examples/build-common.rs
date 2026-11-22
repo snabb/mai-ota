@@ -27,6 +27,21 @@ fn credentials(out: &Path) {
     copy(required("MAI_OTA_CLIENT").into(), out, "client.ccs");
 }
 
+/// `THREAD_DATASET`, hex as `ot-ctl dataset active -x` prints it, into
+/// `out/dataset.bin`.
+// Only the Thread examples call it.
+#[allow(dead_code)]
+fn thread_dataset(out: &Path) {
+    let dataset = required("THREAD_DATASET");
+    let dataset = dataset.trim();
+    let dataset = (0..dataset.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&dataset[i..i + 2], 16))
+        .collect::<Result<Vec<u8>, _>>()
+        .expect("THREAD_DATASET is hex");
+    fs::write(out.join("dataset.bin"), dataset).unwrap();
+}
+
 /// `EXAMPLE_VERSION`: the package version and the build time.
 ///
 /// The build time makes two builds report different versions, which is how the

@@ -22,13 +22,7 @@ fn main() {
     println!("cargo:rustc-link-arg-bins=-Tdefmt.x");
 
     credentials(&out);
-    let dataset = required("THREAD_DATASET");
-    let dataset = (0..dataset.trim().len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&dataset.trim()[i..i + 2], 16))
-        .collect::<Result<Vec<u8>, _>>()
-        .expect("THREAD_DATASET is hex");
-    fs::write(out.join("dataset.bin"), dataset).unwrap();
+    thread_dataset(&out);
 
     version(&["../nrf54l"]);
 }

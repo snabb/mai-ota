@@ -73,7 +73,13 @@ jobs:
           - example: xiao-nrf54lm20a
             target: thumbv8m.main-none-eabihf
             bootloader: true
+          - example: esp32c5
+            target: riscv32imac-unknown-none-elf
+            bootloader: false
           - example: esp32c6
+            target: riscv32imac-unknown-none-elf
+            bootloader: false
+          - example: esp32h2
             target: riscv32imac-unknown-none-elf
             bootloader: false
           - example: esp32
@@ -102,7 +108,7 @@ jobs:
       # OpenThread is compiled from source with bindgen; one LLVM for clang and
       # libclang, or bindgen cannot find the C headers.
       - name: Pin bindgen to one LLVM
-        if: startsWith(matrix.example, 'xiao-nrf54')
+        if: startsWith(matrix.example, 'xiao-nrf54') || matrix.example == 'esp32h2'
         run: |
           version=$(clang -dumpversion | cut -d. -f1)
           sudo apt-get update

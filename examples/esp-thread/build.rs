@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+// Copyright (C) 2026 mai-ota contributors
+
+//! The ESP Thread examples' build script: esp-hal's linker script, the
+//! credentials, the Thread network and the version, all fixed at build time.
+//!
+//! | Variable | |
+//! | --- | --- |
+//! | `MAI_OTA_DEVICE` | the device identity, a path without extension: `NAME.ccs` and `NAME.cosekey` |
+//! | `MAI_OTA_CLIENT` | the client's credential, `client.ccs` |
+//! | `THREAD_DATASET` | the network to join: the active operational dataset in hex, as `ot-ctl dataset active -x` prints it |
+
+include!("../build-common.rs");
+
+fn main() {
+    let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    println!("cargo:rustc-link-arg=-Tlinkall.x");
+
+    credentials(&out);
+    thread_dataset(&out);
+    // Optional: one more board whose images this build takes; see main.rs.
+    println!("cargo:rerun-if-env-changed=EXAMPLE_ALSO_ACCEPT");
+
+    version(&["../esp-thread"]);
+}

@@ -443,6 +443,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be59789d306cc1a082f53bb7c24c270d7e6078c00b7550a718219a7090156d97"
 dependencies = [
+ "defmt 1.2.0",
  "defmt-or-log-macros",
 ]
 
@@ -1457,10 +1458,19 @@ name = "mai-ota-example-common"
 version = "0.0.0"
 dependencies = [
  "chacha20",
+ "defmt 1.2.0",
+ "defmt-or-log",
+ "embassy-futures",
+ "embassy-net 0.9.1 (git+https://github.com/embassy-rs/embassy.git?rev=8a940dab0d56a910277b816987e45315ca7979aa)",
+ "embassy-net-driver-channel",
  "embassy-time",
+ "heapless",
  "mai-coap",
  "mai-ota",
+ "openthread",
  "rand_core 0.10.1",
+ "sha2",
+ "static_cell",
 ]
 
 [[package]]
@@ -2595,11 +2605,9 @@ dependencies = [
  "embassy-executor",
  "embassy-futures",
  "embassy-net 0.9.1 (git+https://github.com/embassy-rs/embassy.git?rev=8a940dab0d56a910277b816987e45315ca7979aa)",
- "embassy-net-driver-channel",
  "embassy-nrf",
  "embassy-sync 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "embassy-time",
- "heapless",
  "mai-coap",
  "mai-ota",
  "mai-ota-example-common",
@@ -2608,7 +2616,6 @@ dependencies = [
  "openthread",
  "panic-probe",
  "rand_core 0.10.1",
- "sha2",
  "static_cell",
  "tinyrlibc",
 ]

@@ -40,8 +40,12 @@ const SECTOR: u32 = 4096;
 
 #[cfg(feature = "esp32")]
 const CHIP_ID: u16 = 0;
+#[cfg(feature = "esp32c5")]
+const CHIP_ID: u16 = 23;
 #[cfg(feature = "esp32c6")]
 const CHIP_ID: u16 = 13;
+#[cfg(feature = "esp32h2")]
+const CHIP_ID: u16 = 16;
 #[cfg(feature = "esp32s3")]
 const CHIP_ID: u16 = 9;
 

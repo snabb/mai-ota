@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright (C) 2026 mai-ota contributors
 
-//! mai-ota on an ESP32, ESP32-C6 or ESP32-S3: joins Wi-Fi and takes firmware on
+//! mai-ota on an ESP32, ESP32-C5, ESP32-C6 or ESP32-S3: joins Wi-Fi and takes firmware on
 //! `coap://<address>/fw`, behind ESP-IDF's bootloader with app rollback.
 
 #![no_std]
@@ -74,13 +74,13 @@ async fn link(mut controller: WifiController<'static>) -> ! {
     }
 }
 
-/// Reset the C6's radio MACs, baseband and front end before Wi-Fi starts.
+/// Reset the C5's or C6's radio MACs, baseband and front end before Wi-Fi starts.
 ///
 /// The modem power domain survives the software reset that boots an uploaded
 /// image, and esp-radio resets it at start-up only on chips without a PMU. Without
 /// this, the new image's Wi-Fi comes up on top of the old image's radio state and
 /// never associates, so every update over Wi-Fi rolls back.
-#[cfg(feature = "esp32c6")]
+#[cfg(any(feature = "esp32c5", feature = "esp32c6"))]
 fn reset_modem() {
     let syscon = esp_hal::peripherals::MODEM_SYSCON::regs();
     syscon.modem_rst_conf().modify(|_, w| {
@@ -119,7 +119,7 @@ fn policy(
 fn after_watchdog_reset() -> bool {
     let reason = esp_hal::system::reset_reason();
     info!("reset reason: {reason:?}");
-    #[cfg(any(feature = "esp32", feature = "esp32c6"))]
+    #[cfg(any(feature = "esp32", feature = "esp32c5", feature = "esp32c6"))]
     return matches!(
         reason,
         Some(SocResetReason::CoreRtcWdt | SocResetReason::SysRtcWdt | SocResetReason::Cpu0RtcWdt)
@@ -172,7 +172,7 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0);
 
     esp_alloc::heap_allocator!(size: HEAP_SIZE);
-    #[cfg(feature = "esp32c6")]
+    #[cfg(any(feature = "esp32c5", feature = "esp32c6"))]
     reset_modem();
     let mut controller =
         WifiController::new(peripherals.WIFI, Default::default()).expect("the radio starts");

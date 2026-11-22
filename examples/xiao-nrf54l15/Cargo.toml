@@ -17,7 +17,7 @@ bench = false
 
 [dependencies]
 mai-ota = { path = "../..", features = ["coap", "embassy-boot", "nrf54l15", "defmt"] }
-mai-ota-example-common = { path = "../common" }
+mai-ota-example-common = { path = "../common", features = ["thread", "defmt"] }
 mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", default-features = false, features = ["embassy-net-xarxa-ipv6", "defmt"] }
 
 # The revision is set by the patch below.
@@ -42,15 +42,11 @@ embassy-net = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940d
     # would be a duplicate.
     "defmt",
 ] }
-# OpenThread's side of the driver, over xarxa's packet buffers (`src/enet.rs`).
-embassy-net-driver-channel = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa" }
 # Built from source: no prebuilt archive for this target. `slaac` forms the address
 # from a border router's prefix, the only one reachable from outside the mesh;
 # `srp-client` registers the name a client finds it by; `isupper` supplies a C
 # function OpenThread calls.
 openthread = { version = "0.4", default-features = false, features = ["slaac", "srp-client", "isupper", "defmt"] }
-# Derives the SRP key from the device's identity.
-sha2 = { version = "0.11", default-features = false }
 # Nordic's 802.15.4 driver, and the multiprotocol layer it runs under, which also
 # arbitrates the RRAM and supplies the critical section.
 nrf-802154 = { version = "0.1", default-features = false, features = ["nrf54l15-app-s", "openthread", "defmt"] }
@@ -63,7 +59,6 @@ defmt = "1"
 # Not blocking: with no probe attached, a full buffer must not stop the firmware.
 defmt-rtt = { version = "1", features = ["disable-blocking-mode"] }
 panic-probe = { version = "1", features = ["print-defmt"] }
-heapless = "0.9"
 rand_core = { version = "0.10", default-features = false }
 static_cell = "2.1"
 

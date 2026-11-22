@@ -181,6 +181,8 @@ mod tests {
         assert_eq!(esp_target(true, Some("esp32"), None), Ok("esp32"));
         assert_eq!(esp_target(true, None, None), Ok("esp32s3"));
         assert_eq!(esp_target(false, None, None), Ok("esp32c6"));
+        assert_eq!(esp_target(false, None, Some("esp32c5")), Ok("esp32c5"));
+        assert_eq!(esp_target(false, None, Some("esp32h2")), Ok("esp32h2"));
     }
 
     #[test]
@@ -188,6 +190,8 @@ mod tests {
         assert!(esp_target(true, Some("esp32s3"), Some("esp32")).is_err());
         assert!(esp_target(true, Some("esp32c6"), None).is_err());
         assert!(esp_target(false, None, Some("esp32")).is_err());
+        assert!(esp_target(true, None, Some("esp32h2")).is_err());
+        assert!(esp_target(false, Some("esp32c5"), Some("esp32c6")).is_err());
     }
 
     #[test]

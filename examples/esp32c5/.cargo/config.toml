@@ -1,0 +1,10 @@
+[target.riscv32imac-unknown-none-elf]
+# `--erase-parts otadata`: espflash writes `ota_0`, and the bootloader would
+# otherwise keep booting whatever `otadata` last selected.
+runner = "espflash flash --monitor --chip esp32c5 --erase-parts otadata"
+
+[build]
+target = "riscv32imac-unknown-none-elf"
+
+[env]
+ESP_LOG = "info"

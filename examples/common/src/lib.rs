@@ -11,6 +11,11 @@
 
 #![no_std]
 
+#[cfg(feature = "thread")]
+pub mod enet;
+#[cfg(feature = "thread")]
+pub mod thread;
+
 use mai_coap::InlineStorage;
 use mai_coap::codec::Code;
 use mai_coap::crypto::SoftwareCrypto;

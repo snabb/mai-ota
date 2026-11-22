@@ -84,7 +84,7 @@ The Cortex-M magic cannot change for devices in the field; see
   slow flash start-up). That boot then runs with the watchdog unarmed for 10
   minutes, as after a real one.
 
-## ESP32-C6
+## ESP32-C5, ESP32-C6
 
 * **Every Wi-Fi update rolls back, and the new image never joins the network.**
   The software reset that boots it leaves the radio as the old image left it.

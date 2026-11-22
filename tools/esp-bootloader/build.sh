@@ -6,7 +6,9 @@
 # needs and espflash's bundled bootloader lacks, for one chip:
 #
 #   tools/esp-bootloader/build.sh esp32 path/to/bootloader.bin
+#   tools/esp-bootloader/build.sh esp32c5 path/to/bootloader.bin
 #   tools/esp-bootloader/build.sh esp32c6 path/to/bootloader.bin
+#   tools/esp-bootloader/build.sh esp32h2 path/to/bootloader.bin
 #   tools/esp-bootloader/build.sh esp32s3 path/to/bootloader.bin
 #
 # Name the output in the firmware's espflash.toml (`[idf] bootloader = ...`) so
@@ -17,15 +19,16 @@
 # espflash rewrites them in the image header for the board it flashes.
 set -euo pipefail
 
-chip=${1:?usage: build.sh esp32|esp32c6|esp32s3 OUTPUT}
-out=${2:?usage: build.sh esp32|esp32c6|esp32s3 OUTPUT}
+chip=${1:?usage: build.sh esp32|esp32c5|esp32c6|esp32h2|esp32s3 OUTPUT}
+out=${2:?usage: build.sh esp32|esp32c5|esp32c6|esp32h2|esp32s3 OUTPUT}
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 image=${IDF_IMAGE:-espressif/idf@sha256:81893c71bb5e570088901f21def8684c25cd2a9020281bd01b843a7655edb18c}
 
-# Where the ROM loads the bootloader from: 0x1000 on the ESP32 (and S2), 0x0 on
-# later chips. The size check needs it to find the room up to the partition table.
+# Where the ROM loads the bootloader from: 0x1000 on the ESP32 (and S2), 0x2000
+# on the C5, 0x0 on the other later chips. The size check needs it to find the room up to the partition table.
 case $chip in
 esp32 | esp32s2) offset=0x1000 ;;
+esp32c5) offset=0x2000 ;;
 *) offset=0x0 ;;
 esac
 

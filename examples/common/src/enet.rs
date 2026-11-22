@@ -10,7 +10,7 @@
 //! `embassy-net-driver-channel`, where the runner fills a slot in the channel;
 //! the one from Git lends it a buffer from the stack's packet pool instead.
 
-use defmt::warn;
+use defmt_or_log::warn;
 use embassy_futures::select::{Either3, select3};
 use embassy_net_driver_channel as ch;
 use embassy_net_driver_channel::driver::HardwareAddress;

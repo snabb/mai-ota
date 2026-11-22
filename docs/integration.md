@@ -154,7 +154,7 @@ which does not count `reset_chip`'s own watchdog reset. On the nRF54,
 `Watchdog::new` adopts the running watchdog only if its configuration matches
 `watchdog::nrf::config()`, which the bootloader's does.
 
-## Behind ESP-IDF's bootloader (ESP32, ESP32-C6, ESP32-S3)
+## Behind ESP-IDF's bootloader (ESP32, ESP32-C5, ESP32-C6, ESP32-H2, ESP32-S3)
 
 ### Bootloader and partition table
 
@@ -221,13 +221,20 @@ v3.0 on the ESP32 by default, and many boards are v1.x. Set
 (`examples/esp32/.cargo/config.toml`) if the firmware uses neither PSRAM nor
 the second core, which the v1.x errata fixed in v3.0 concern.
 
-**ESP32-C6 with Wi-Fi: reset the modem before starting Wi-Fi.** An uploaded
+**ESP32-C5, C6 and H2: reset the modem before starting the radio.** An uploaded
 image boots by a software reset, which leaves the modem power domain as the
 old image left it, and esp-radio resets it only on chips without a PMU. The new
 image's Wi-Fi then never associates, and every update rolls back. Pulse the
 Wi-Fi, Bluetooth and 802.15.4 MAC, baseband and front-end bits of
 `MODEM_SYSCON.modem_rst_conf` before `WifiController::new`
-(`reset_modem` in `examples/esp/main.rs`).
+(`reset_modem` in `examples/esp/main.rs`). The H2 has no Wi-Fi bits; its
+example resets the rest before `Ieee802154::new` (`examples/esp-thread/main.rs`).
+
+**Thread on the ESP32-H2.** The example runs OpenThread through the `openthread`
+crate's `esp-radio` backend, with the Thread helpers it shares with the nRF54
+examples (`examples/common/src/thread.rs`). OpenThread takes its random
+generator before the radio starts, and with it the radio's entropy source, so
+the example's `Trng` runs over the SAR ADC (`TrngSource::new(RNG, ADC1)`).
 
 The flash is the firmware's: one `FlashStorage` behind a mutex, which mai-ota
 locks for each operation and nothing longer, so settings and other partitions
