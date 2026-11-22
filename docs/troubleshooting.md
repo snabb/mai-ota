@@ -74,6 +74,16 @@ The Cortex-M magic cannot change for devices in the field; see
 * A debug probe that halts the core pauses the watchdog (nRF, RP). On an ESP32,
   attaching a console over USB can reset the chip and hide the watchdog's cause.
 
+## ESP32
+
+* **espflash refuses with `Minimum supported revision is 3.0`, or the image
+  panics at boot with `older than the minimum required`.** The chip is v1.x;
+  see the [integration guide](integration.md#the-application-1) for
+  `ESP_HAL_CONFIG_MIN_CHIP_REVISION`.
+* **A v1.x chip may report a watchdog reset after a power-on** (errata RES-3.8,
+  slow flash start-up). That boot then runs with the watchdog unarmed for 10
+  minutes, as after a real one.
+
 ## ESP32-C6
 
 * **Every Wi-Fi update rolls back, and the new image never joins the network.**

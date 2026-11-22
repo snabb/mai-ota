@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright (C) 2026 mai-ota contributors
 
-//! mai-ota on an ESP32-C6 or ESP32-S3: joins Wi-Fi and takes firmware on
+//! mai-ota on an ESP32, ESP32-C6 or ESP32-S3: joins Wi-Fi and takes firmware on
 //! `coap://<address>/fw`, behind ESP-IDF's bootloader with app rollback.
 
 #![no_std]
@@ -119,7 +119,7 @@ fn policy(
 fn after_watchdog_reset() -> bool {
     let reason = esp_hal::system::reset_reason();
     info!("reset reason: {reason:?}");
-    #[cfg(feature = "esp32c6")]
+    #[cfg(any(feature = "esp32", feature = "esp32c6"))]
     return matches!(
         reason,
         Some(SocResetReason::CoreRtcWdt | SocResetReason::SysRtcWdt | SocResetReason::Cpu0RtcWdt)

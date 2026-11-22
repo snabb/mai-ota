@@ -76,6 +76,9 @@ jobs:
           - example: esp32c6
             target: riscv32imac-unknown-none-elf
             bootloader: false
+          - example: esp32
+            target: xtensa-esp32-none-elf
+            bootloader: false
           - example: esp32s3
             target: xtensa-esp32s3-none-elf
             bootloader: false
@@ -84,18 +87,18 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        if: matrix.example != 'esp32s3'
+        if: "!startsWith(matrix.target, 'xtensa-')"
         run: |
           rustup toolchain install stable --profile minimal --component clippy,rust-src
           rustup target add ${{ matrix.target }}
       # Xtensa needs Espressif's toolchain, and its linker on PATH. 1.100 is esp-hal
       # main's MSRV, newer than the release espup takes by default.
       - name: Install the ESP toolchain
-        if: matrix.example == 'esp32s3'
+        if: startsWith(matrix.target, 'xtensa-')
         run: |
           curl -LsSf https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu -o espup
           chmod +x espup
-          ./espup install --targets esp32s3 --toolchain-version 1.100.0.0
+          ./espup install --targets esp32,esp32s3 --toolchain-version 1.100.0.0
       # OpenThread is compiled from source with bindgen; one LLVM for clang and
       # libclang, or bindgen cannot find the C headers.
       - name: Pin bindgen to one LLVM

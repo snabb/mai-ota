@@ -6,7 +6,7 @@
 use std::{os::unix::fs::PermissionsExt, path::Path, process::Command};
 
 use object::{
-    Endianness, FileKind, Object, ObjectSection,
+    Endianness, FileKind, Object, ObjectSection, ObjectSymbol,
     elf::{EM_ARM, EM_RISCV, EM_XTENSA, PT_LOAD},
     read::elf::{ElfFile32, FileHeader, ProgramHeader},
 };
@@ -18,8 +18,9 @@ use crate::Failure;
 const BOOTLOADER_STATE: &str = ".bootloader_state";
 
 /// The image for `elf`. An ESP32 ELF goes through `espflash save-image` for `chip`,
-/// or for the chip its architecture implies; a Cortex-M one is its loadable bytes
-/// from the lowest load address up, as `objcopy -O binary` makes them.
+/// or for the chip its metadata names, or else the one its architecture implies;
+/// a Cortex-M one is its loadable bytes from the lowest load address up, as
+/// `objcopy -O binary` makes them.
 pub fn from_elf(elf: &Path, chip: Option<&str>) -> Result<Vec<u8>, Failure> {
     let data = std::fs::read(elf).map_err(|e| Failure::local(format!("{}: {e}", elf.display())))?;
     let not_elf = || Failure::local(format!("{}: not a 32-bit ELF file", elf.display()));
@@ -28,31 +29,15 @@ pub fn from_elf(elf: &Path, chip: Option<&str>) -> Result<Vec<u8>, Failure> {
     }
     let file = ElfFile32::<Endianness>::parse(&*data).map_err(|_| not_elf())?;
     let machine = file.elf_header().e_machine(file.endian());
-    let chip = match (machine, chip) {
-        (EM_ARM, None) => {
-            return cortex_m(&file).map_err(|e| Failure::local(format!("{}: {e}", elf.display())));
+    if machine == EM_ARM {
+        if chip.is_some() {
+            return Err(Failure::local("--chip is for ESP32 images"));
         }
-        (EM_ARM, Some(_)) => return Err(Failure::local("--chip is for ESP32 images")),
-        // espflash writes the chip given into the image header, which is what the
-        // device checks; an ELF for the other architecture must not get that far.
-        (EM_RISCV | EM_XTENSA, Some(chip)) => {
-            let xtensa = matches!(chip, "esp32" | "esp32s2" | "esp32s3");
-            if xtensa != (machine == EM_XTENSA) {
-                return Err(Failure::local(format!(
-                    "{}: a {} ELF, not one for {chip}",
-                    elf.display(),
-                    if machine == EM_XTENSA {
-                        "Xtensa"
-                    } else {
-                        "RISC-V"
-                    }
-                )));
-            }
-            chip
-        }
-        // The ESP32 chips mai-ota has a slot for.
-        (EM_RISCV, None) => "esp32c6",
-        (EM_XTENSA, None) => "esp32s3",
+        return cortex_m(&file).map_err(|e| Failure::local(format!("{}: {e}", elf.display())));
+    }
+    let xtensa = match machine {
+        EM_XTENSA => true,
+        EM_RISCV => false,
         _ => {
             return Err(Failure::local(format!(
                 "{}: machine {machine:#x} has no image format here",
@@ -60,7 +45,46 @@ pub fn from_elf(elf: &Path, chip: Option<&str>) -> Result<Vec<u8>, Failure> {
             )));
         }
     };
+    let chip = esp_target(xtensa, chip, esp_chip(&file))
+        .map_err(|e| Failure::local(format!("{}: {e}", elf.display())))?;
     esp(elf, chip)
+}
+
+/// The chip to build the image for: `given`, else `built` (the ELF's metadata),
+/// else the one mai-ota has a slot for on that architecture.
+fn esp_target<'a>(
+    xtensa: bool,
+    given: Option<&'a str>,
+    built: Option<&'a str>,
+) -> Result<&'a str, String> {
+    let chip = match (given, built) {
+        (Some(given), Some(built)) if given != built => {
+            return Err(format!("built for {built}, not {given}"));
+        }
+        (Some(chip), _) | (None, Some(chip)) => chip,
+        (None, None) if xtensa => "esp32s3",
+        (None, None) => "esp32c6",
+    };
+    // espflash writes the chip given into the image header, which is what the
+    // device checks; an ELF for the other architecture must not get that far.
+    if matches!(chip, "esp32" | "esp32s2" | "esp32s3") != xtensa {
+        return Err(format!(
+            "a {} ELF, not one for {chip}",
+            if xtensa { "Xtensa" } else { "RISC-V" }
+        ));
+    }
+    Ok(chip)
+}
+
+/// The chip an esp-hal ELF was built for: `build_info.CHIP_NAME` in
+/// `.espressif.metadata`, which esp-bootloader-esp-idf emits and espflash reads.
+fn esp_chip<'a>(file: &ElfFile32<'a, Endianness>) -> Option<&'a str> {
+    let section = file.section_by_name(".espressif.metadata")?;
+    let symbol = file.symbols().find(|s| {
+        s.section_index() == Some(section.index()) && s.name() == Ok("build_info.CHIP_NAME")
+    })?;
+    let data = section.data_range(symbol.address(), symbol.size()).ok()??;
+    std::str::from_utf8(data).ok()
 }
 
 fn esp(elf: &Path, chip: &str) -> Result<Vec<u8>, Failure> {
@@ -148,6 +172,22 @@ mod tests {
     fn segments_are_placed_by_load_address_with_zeroed_gaps() {
         let parts = vec![(0x1008, &[3u8, 4][..]), (0x1000, &[1u8, 2][..])];
         assert_eq!(image(parts).unwrap(), [1, 2, 0, 0, 0, 0, 0, 0, 3, 4]);
+    }
+
+    #[test]
+    fn esp_chip_comes_from_the_metadata_unless_given() {
+        assert_eq!(esp_target(true, None, Some("esp32")), Ok("esp32"));
+        assert_eq!(esp_target(true, Some("esp32"), Some("esp32")), Ok("esp32"));
+        assert_eq!(esp_target(true, Some("esp32"), None), Ok("esp32"));
+        assert_eq!(esp_target(true, None, None), Ok("esp32s3"));
+        assert_eq!(esp_target(false, None, None), Ok("esp32c6"));
+    }
+
+    #[test]
+    fn esp_chip_contradicting_the_elf_is_refused() {
+        assert!(esp_target(true, Some("esp32s3"), Some("esp32")).is_err());
+        assert!(esp_target(true, Some("esp32c6"), None).is_err());
+        assert!(esp_target(false, None, Some("esp32")).is_err());
     }
 
     #[test]

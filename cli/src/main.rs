@@ -73,8 +73,8 @@ enum Command {
         host: String,
         /// The firmware ELF.
         elf: PathBuf,
-        /// The ESP32 chip, for `espflash save-image`; by default esp32c6 for a
-        /// RISC-V ELF and esp32s3 for an Xtensa one.
+        /// The ESP32 chip, for `espflash save-image`; by default the one the ELF's
+        /// esp-hal metadata names, else esp32c6 for RISC-V and esp32s3 for Xtensa.
         #[arg(long)]
         chip: Option<String>,
         /// Block size in bytes; the device may ask for smaller.

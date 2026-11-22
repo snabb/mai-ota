@@ -21,7 +21,8 @@
 //!   reports the running image's version to a `GET`.
 //! * [`supervise`]: confirms or rolls back the trial, then reboots after an upload.
 //! * Slots: module `embassy_boot` (feature `embassy-boot`) behind an embassy-boot
-//!   bootloader, and module `esp` (features `esp32c6`, `esp32s3`) behind ESP-IDF's.
+//!   bootloader, and module `esp` (features `esp32`, `esp32c6`, `esp32s3`)
+//!   behind ESP-IDF's.
 //! * [`watchdog`]: a hardware watchdog fed while the executor runs, which turns a
 //!   halt or a hang on trial into a rollback, with chip modules behind features.
 //!
@@ -38,7 +39,7 @@ mod fmt;
 pub mod coap;
 #[cfg(feature = "embassy-boot")]
 pub mod embassy_boot;
-#[cfg(any(feature = "esp32c6", feature = "esp32s3"))]
+#[cfg(any(feature = "esp32", feature = "esp32c6", feature = "esp32s3"))]
 pub mod esp;
 pub mod image;
 pub mod otadata;

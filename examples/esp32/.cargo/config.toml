@@ -1,0 +1,20 @@
+[target.xtensa-esp32-none-elf]
+# `--erase-parts otadata`: espflash writes `ota_0`, and the bootloader would
+# otherwise keep booting whatever `otadata` last selected.
+runner = "espflash flash --monitor --chip esp32 --erase-parts otadata"
+
+[build]
+# No `-C force-frame-pointers`: the Xtensa backend miscompiles P-256 and HKDF with
+# it, and EDHOC then fails.
+target = "xtensa-esp32-none-elf"
+
+[env]
+ESP_LOG = "info"
+# esp-hal requires v3.0 by default; many ESP32 boards (the Atom Lite's
+# ESP32-PICO-D4 among them) are v1.x. Errata CPU-3.9 and CPU-3.10, which v3.0
+# fixed, need PSRAM or the second core, which this firmware does not use.
+ESP_HAL_CONFIG_MIN_CHIP_REVISION = "100"
+
+[unstable]
+# Xtensa has no precompiled `core` or `alloc`; the Wi-Fi driver allocates.
+build-std = ["core", "alloc"]

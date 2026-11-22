@@ -154,7 +154,7 @@ which does not count `reset_chip`'s own watchdog reset. On the nRF54,
 `Watchdog::new` adopts the running watchdog only if its configuration matches
 `watchdog::nrf::config()`, which the bootloader's does.
 
-## Behind ESP-IDF's bootloader (ESP32-C6, ESP32-S3)
+## Behind ESP-IDF's bootloader (ESP32, ESP32-C6, ESP32-S3)
 
 ### Bootloader and partition table
 
@@ -214,6 +214,12 @@ if !ota.boot.trial {
 
 Start the watchdog before anything that touches the flash: a trial that panics or
 hangs there must still reset, and the panic handler does not reset by itself.
+
+**ESP32 before v3.0: lower esp-hal's minimum chip revision.** esp-hal requires
+v3.0 on the ESP32 by default, and many boards are v1.x. Set
+`ESP_HAL_CONFIG_MIN_CHIP_REVISION = "100"` in `.cargo/config.toml`'s `[env]`
+(`examples/esp32/.cargo/config.toml`) if the firmware uses neither PSRAM nor
+the second core, which the v1.x errata fixed in v3.0 concern.
 
 **ESP32-C6 with Wi-Fi: reset the modem before starting Wi-Fi.** An uploaded
 image boots by a software reset, which leaves the modem power domain as the

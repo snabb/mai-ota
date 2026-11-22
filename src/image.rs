@@ -295,6 +295,10 @@ mod tests {
     fn refuses_another_board_or_chip() {
         assert!(esp(&image(9, "heltec-wifi-lora-32-v3"), 9, "xiao-esp32s3").is_err());
         assert!(esp(&image(9, "unit-c6l"), 13, "unit-c6l").is_err());
+        // The ESP32's chip ID is 0, which must not read as "any chip".
+        assert!(esp(&image(9, "atom-lite"), 0, "atom-lite").is_err());
+        assert!(esp(&image(0, "atom-lite"), 9, "atom-lite").is_err());
+        assert_eq!(esp(&image(0, "atom-lite"), 0, "atom-lite"), Ok(()));
         // A name that merely starts with the board's must not pass.
         assert!(esp(&image(13, "unit-c6l-x"), 13, "unit-c6l").is_err());
     }

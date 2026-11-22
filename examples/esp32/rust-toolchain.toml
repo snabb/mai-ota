@@ -1,0 +1,6 @@
+# Xtensa has no upstream rustc backend: Espressif's fork, installed with
+# `espup install`. Building also needs `. ~/export-esp.sh` in the same shell, for
+# the linker.
+[toolchain]
+channel = "esp"
+components = ["rust-src"]

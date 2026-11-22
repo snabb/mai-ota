@@ -38,6 +38,8 @@ const TABLE_LEN: usize = partitions::PARTITION_TABLE_MAX_LEN;
 /// The flash erases in sectors of this many bytes.
 const SECTOR: u32 = 4096;
 
+#[cfg(feature = "esp32")]
+const CHIP_ID: u16 = 0;
 #[cfg(feature = "esp32c6")]
 const CHIP_ID: u16 = 13;
 #[cfg(feature = "esp32s3")]

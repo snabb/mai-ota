@@ -12,10 +12,10 @@
 //! The feeder proves that the executor schedules tasks, not that every task is
 //! healthy.
 //!
-//! Chip modules, each behind its feature: `esp` (`esp32c6`, `esp32s3`), `nrf`
+//! Chip modules, each behind its feature: `esp` (`esp32`, `esp32c6`, `esp32s3`), `nrf`
 //! (`nrf52840`, `nrf54l15`, `nrf54lm20`), `rp` (`rp2040`, `rp235xa`), `stm32` (`stm32`).
 
-#[cfg(any(feature = "esp32c6", feature = "esp32s3"))]
+#[cfg(any(feature = "esp32", feature = "esp32c6", feature = "esp32s3"))]
 pub mod esp;
 #[cfg(any(feature = "nrf52840", feature = "nrf54l15", feature = "nrf54lm20"))]
 pub mod nrf;

@@ -956,6 +956,7 @@ dependencies = [
  "document-features",
  "embassy-embedded-hal",
  "embassy-futures",
+ "embassy-net-driver",
  "embassy-sync 0.8.0",
  "embassy-usb-driver",
  "embassy-usb-synopsys-otg 0.4.0",
@@ -994,6 +995,8 @@ dependencies = [
  "rand_core 0.9.5",
  "riscv",
  "sdio",
+ "sha1",
+ "sha2",
  "somni-template",
  "static_cell",
  "strum",
@@ -1042,6 +1045,7 @@ checksum = "e933ff78374b763b65998b64ad671b4890ed4ba13a80deff9f53afe95ede289d"
 dependencies = [
  "document-features",
  "esp-metadata-generated",
+ "esp32",
  "esp32c6",
  "esp32s3",
 ]
@@ -1058,6 +1062,7 @@ dependencies = [
  "esp-metadata-generated",
  "esp-rom-sys",
  "esp-sync",
+ "esp32",
  "esp32c6",
  "esp32s3",
 ]
@@ -2022,6 +2027,17 @@ dependencies = [
  "ryu",
  "serde",
  "unsafe-libyaml",
+]
+
+[[package]]
+name = "sha1"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aacc4cc499359472b4abe1bf11d0b12e688af9a805fa5e3016f9a386dc2d0214"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.3.1",
+ "digest 0.11.3",
 ]
 
 [[package]]

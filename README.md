@@ -17,6 +17,7 @@ with EDHOC and OSCORE ([mai-coap](https://github.com/snabb/mai-coap)).
 
 | Chip | Bootloader | Network in the example | Measured upload rate |
 | --- | --- | --- | --- |
+| ESP32 | ESP-IDF's, with app rollback | Wi-Fi | ~14–22 KiB/s (1 MiB in ~45–75 s) |
 | ESP32-C6 | ESP-IDF's, with app rollback | Wi-Fi | ~29 KiB/s (1 MiB in ~35 s) |
 | ESP32-S3 | ESP-IDF's, with app rollback | Wi-Fi | ~23 KiB/s (1 MiB in ~45 s) |
 | nRF54L15 | `mai-ota-bootloader` (embassy-boot) | Thread | ~2.6 KiB/s (1 MiB in ~7 min) |
@@ -105,7 +106,7 @@ mai-ota = { git = "https://github.com/snabb/mai-ota.git", rev = "…", features 
 | --- | --- |
 | `coap` | `coap::{Resource, Proving, run}`: uploads over mai-coap |
 | `embassy-boot` | `embassy_boot::{ota, Slot}`, for nRF54L15, nRF54LM20A and RP2040/RP2350 |
-| `esp32c6`, `esp32s3` | `esp::{ota, Slot}` and `watchdog::esp` |
+| `esp32`, `esp32c6`, `esp32s3` | `esp::{ota, Slot}` and `watchdog::esp` |
 | `nrf52840`, `nrf54l15`, `nrf54lm20` | `watchdog::nrf`; on the nRF54L, with embassy-nrf's secure chip feature (`nrf54l15-app-s`, `nrf54lm20-app-s`) |
 | `rp2040`, `rp235xa` | `watchdog::rp` |
 | `stm32` | `watchdog::stm32` |

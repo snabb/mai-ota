@@ -66,6 +66,12 @@ coap = [
 embassy-boot = ["dep:embassy-boot", "dep:embassy-embedded-hal", "dep:embedded-storage-async"]
 
 # `esp::Slot` and `watchdog::esp`, behind ESP-IDF's bootloader.
+esp32 = [
+    "dep:esp-hal",
+    "dep:esp-bootloader-esp-idf",
+    "esp-hal/esp32",
+    "esp-bootloader-esp-idf/esp32",
+]
 esp32c6 = [
     "dep:esp-hal",
     "dep:esp-bootloader-esp-idf",

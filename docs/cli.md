@@ -58,7 +58,7 @@ mai-ota --identity client.ccs --key client.cosekey --peer device.ccs \
 
 | Option | |
 | --- | --- |
-| `--chip` | the ESP32 chip, for `espflash save-image`; by default esp32c6 for RISC-V and esp32s3 for Xtensa; refused when the ELF is for the other architecture |
+| `--chip` | the ESP32 chip, for `espflash save-image`; by default the chip the ELF's esp-hal metadata (`build_info.CHIP_NAME`) names, else esp32c6 for RISC-V and esp32s3 for Xtensa, so an ESP32 ELF stripped of its symbols needs `--chip esp32`; refused when it contradicts that metadata or the ELF's architecture |
 | `--block-size` | a power of two from 16 to 1024, default 1024; the device may ask for smaller |
 | `--no-confirm` | stop after the upload and send nothing more, so the trial times out and the device rolls back; for testing |
 | `--path` | the upload path, default `/fw` |

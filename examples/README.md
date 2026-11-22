@@ -6,6 +6,7 @@ CoAP under EDHOC and OSCORE, and does nothing else. With the
 
 | Example | Board | Network | Bootloader | Binary |
 | --- | --- | --- | --- | --- |
+| `esp32` | any ESP32 with 4 MiB of flash or more, chip revision v1.0 or later (M5Stack Atom Lite) | Wi-Fi | ESP-IDF's, from `tools/esp-bootloader` | `xtensa-esp32-none-elf/release/esp32-example` |
 | `esp32c6` | any ESP32-C6 with 4 MiB of flash or more | Wi-Fi | ESP-IDF's, from `tools/esp-bootloader` | `riscv32imac-unknown-none-elf/release/esp32c6-example` |
 | `esp32s3` | any ESP32-S3 with 4 MiB of flash or more | Wi-Fi | ESP-IDF's, from `tools/esp-bootloader` | `xtensa-esp32s3-none-elf/release/esp32s3-example` |
 | `pico-w` | Raspberry Pi Pico W | Wi-Fi | `pico-w/bootloader` | `thumbv6m-none-eabi/release/pico-w` |
@@ -14,7 +15,7 @@ CoAP under EDHOC and OSCORE, and does nothing else. With the
 | `xiao-nrf54lm20a` | Seeed XIAO nRF54LM20A | Thread | `xiao-nrf54lm20a/bootloader` | `thumbv8m.main-none-eabihf/release/xiao-nrf54lm20a` |
 
 Every example builds into `examples/target/`. `common/` is the CoAP server they
-share; `esp/`, `rp/` and `nrf54l/` hold the source shared by the two ESP, the two
+share; `esp/`, `rp/` and `nrf54l/` hold the source shared by the three ESP, the two
 Pico and the two XIAO nRF54 examples.
 
 ## Prerequisites
@@ -34,14 +35,14 @@ cargo install --locked --git https://github.com/snabb/mai-ota mai-ota-cli
 | `pico-2-w` | `rustup target add thumbv8m.main-none-eabihf`, probe-rs and a debug probe |
 | `xiao-nrf54l15`, `xiao-nrf54lm20a` | `rustup target add thumbv8m.main-none-eabihf`, probe-rs; CMake, clang and libclang of the same LLVM version (OpenThread is built from source) |
 | `esp32c6` | `rustup target add riscv32imac-unknown-none-elf`, [espflash](https://github.com/esp-rs/espflash), Docker |
-| `esp32s3` | Espressif's Xtensa toolchain (below), espflash, Docker |
+| `esp32`, `esp32s3` | Espressif's Xtensa toolchain (below), espflash, Docker |
 
-The ESP32-S3 needs Espressif's Rust toolchain at esp-hal main's MSRV, a
+The ESP32 and ESP32-S3 need Espressif's Rust toolchain at esp-hal main's MSRV, a
 pre-release that `espup` installs only when asked, and `. ~/export-esp.sh` in
 every shell that builds:
 
 ```sh
-espup install --targets esp32s3 --toolchain-version 1.100.0.0
+espup install --targets esp32,esp32s3 --toolchain-version 1.100.0.0
 ```
 
 ## 1. Credentials
@@ -101,7 +102,7 @@ For the Pico 2 W use `--chip RP235x` and `thumbv8m.main-none-eabihf/release/pico
 for the XIAOs, `--chip nRF54L15` or `--chip nRF54LM20A` and
 `thumbv8m.main-none-eabihf/release/xiao-nrf54l15-bootloader` or `xiao-nrf54lm20a-bootloader`.
 
-**ESP32-C6, ESP32-S3:** build ESP-IDF's bootloader with rollback once per chip.
+**ESP32, ESP32-C6, ESP32-S3:** build ESP-IDF's bootloader with rollback once per chip.
 The example's `espflash.toml` names it, so every flash writes it:
 
 ```sh

@@ -5,6 +5,7 @@
 # Build the ESP-IDF second-stage bootloader with app rollback, which mai-ota
 # needs and espflash's bundled bootloader lacks, for one chip:
 #
+#   tools/esp-bootloader/build.sh esp32 path/to/bootloader.bin
 #   tools/esp-bootloader/build.sh esp32c6 path/to/bootloader.bin
 #   tools/esp-bootloader/build.sh esp32s3 path/to/bootloader.bin
 #
@@ -16,10 +17,17 @@
 # espflash rewrites them in the image header for the board it flashes.
 set -euo pipefail
 
-chip=${1:?usage: build.sh esp32c6|esp32s3 OUTPUT}
-out=${2:?usage: build.sh esp32c6|esp32s3 OUTPUT}
+chip=${1:?usage: build.sh esp32|esp32c6|esp32s3 OUTPUT}
+out=${2:?usage: build.sh esp32|esp32c6|esp32s3 OUTPUT}
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 image=${IDF_IMAGE:-espressif/idf@sha256:81893c71bb5e570088901f21def8684c25cd2a9020281bd01b843a7655edb18c}
+
+# Where the ROM loads the bootloader from: 0x1000 on the ESP32 (and S2), 0x0 on
+# later chips. The size check needs it to find the room up to the partition table.
+case $chip in
+esp32 | esp32s2) offset=0x1000 ;;
+*) offset=0x0 ;;
+esac
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/esp-bootloader-$chip.XXXXXX")
 trap 'rm -rf "$work"' EXIT
@@ -36,7 +44,7 @@ set -euo pipefail
 idf.py set-target $chip
 idf.py bootloader
 grep -qx CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y sdkconfig
-python \$IDF_PATH/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 build/bootloader/bootloader.bin
+python \$IDF_PATH/components/partition_table/check_sizes.py --offset 0x8000 bootloader $offset build/bootloader/bootloader.bin
 git -C \$IDF_PATH describe --always --tags > idf-version.txt
 " > "$work/build.log" 2>&1 || { tail -30 "$work/build.log"; exit 1; }
 

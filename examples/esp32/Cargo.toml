@@ -1,0 +1,88 @@
+[package]
+name = "esp32-example"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "mai-ota example for an ESP32 board: firmware updates over Wi-Fi"
+publish = false
+build = "../esp/build.rs"
+
+[workspace]
+
+[[bin]]
+name = "esp32-example"
+path = "../esp/main.rs"
+test = false
+bench = false
+
+[features]
+default = ["esp32"]
+esp32 = []
+esp32c6 = []
+esp32s3 = []
+
+[dependencies]
+mai-ota = { path = "../..", features = ["coap", "esp32", "log"] }
+mai-ota-example-common = { path = "../common" }
+mai-coap = { git = "https://github.com/snabb/mai-coap.git", rev = "925b29b741664802a535fb4582e70d58c786be71", default-features = false, features = ["embassy-net-xarxa-ipv4", "embassy-net-xarxa-ipv6", "log"] }
+
+esp-hal = { version = "~1.2.0", features = ["esp32", "log-04", "unstable"] }
+esp-rtos = { version = "0.4.0", features = ["embassy", "esp-radio", "esp32", "log-04"] }
+esp-radio = { version = "1.0.0-beta.2", features = ["esp32", "wifi", "unstable", "log-04"] }
+esp-alloc = "0.11.0"
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32", "log-04"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32", "panic-handler", "println"] }
+esp-println = { version = "0.18.0", features = ["esp32", "log-04"] }
+embassy-executor = "0.10"
+# The revision mai-coap's xarxa transport takes embassy-net from.
+embassy-net = { git = "https://github.com/embassy-rs/embassy.git", rev = "8a940dab0d56a910277b816987e45315ca7979aa", features = [
+    "ipv4",
+    "ipv6",
+    "dhcpv4",
+    "slaac",
+    "medium-ethernet",
+    "iface-bind",
+    "icmp-ping-reply",
+    "log",
+] }
+embassy-sync = "0.8"
+embassy-time = "0.5"
+critical-section = "1.2"
+log = "0.4"
+rand_core = { version = "0.10", default-features = false }
+static_cell = "2.1"
+
+# embassy-net from Git takes these from its own repository; the released ones
+# are what esp-rtos and mai-ota use.
+[patch."https://github.com/embassy-rs/embassy.git"]
+embassy-futures = { version = "=0.1.2" }
+embassy-time = { version = "=0.5.1" }
+embassy-time-driver = { version = "=0.2.2" }
+embassy-time-queue-utils = { version = "=0.3.2" }
+
+# esp-hal's main branch with esp-radio receiving into xarxa's stack-lent buffers,
+# which needs xarxa-driver from Git and so cannot go upstream yet. Every crate of
+# the repository together, so the graph has one of each.
+[patch.crates-io]
+esp-alloc = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-backtrace = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-bootloader-esp-idf = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-config = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-hal = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-hal-procmacros = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-metadata-generated = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-phy = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-println = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-radio = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-radio-rtos-driver = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-rom-sys = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-rtos = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+esp-sync = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+xtensa-lx = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+xtensa-lx-rt = { git = "https://github.com/snabb/esp-hal.git", rev = "35fd10c005c7f10751749bfe7460fcec05d0a2b5" }
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "fat"
+opt-level = "s"
