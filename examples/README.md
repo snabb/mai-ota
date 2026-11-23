@@ -34,9 +34,9 @@ cargo install --locked --git https://github.com/snabb/mai-ota mai-ota-cli
 
 | Example | Also needs |
 | --- | --- |
-| `pico-w` | `rustup target add thumbv6m-none-eabi`, [probe-rs](https://probe.rs) and a debug probe |
-| `pico-2-w` | `rustup target add thumbv8m.main-none-eabihf`, probe-rs and a debug probe |
-| `xiao-nrf54l15`, `xiao-nrf54lm20a` | `rustup target add thumbv8m.main-none-eabihf`, probe-rs; CMake, clang and libclang of the same LLVM version (OpenThread is built from source) |
+| `pico-w` | `rustup target add thumbv6m-none-eabi`, a USB data cable, and [picotool](https://github.com/raspberrypi/pico-sdk-tools/releases) 2.3.1 or later |
+| `pico-2-w` | `rustup target add thumbv8m.main-none-eabihf`, a USB data cable, and picotool 2.3.1 or later |
+| `xiao-nrf54l15`, `xiao-nrf54lm20a` | `rustup target add thumbv8m.main-none-eabihf`, [probe-rs](https://probe.rs); CMake, clang and libclang of the same LLVM version (OpenThread is built from source) |
 | `esp32c5`, `esp32c6` | `rustup target add riscv32imac-unknown-none-elf`, [espflash](https://github.com/esp-rs/espflash), Docker |
 | `esp32h2` | as `esp32c6`, plus CMake, clang and libclang of the same LLVM version (OpenThread is built from source) |
 | `esp32`, `esp32s3` | Espressif's Xtensa toolchain (below), espflash, Docker |
@@ -92,21 +92,51 @@ tells the new image from a rollback.
 
 ## 3. Flash once, by wire
 
-**Pico W, Pico 2 W, XIAO nRF54L15, XIAO nRF54LM20A:** the bootloader first, then the
-application. The application is linked to run behind the bootloader and does
-not start without it.
+### Pico W and Pico 2 W
+
+Both boards can flash over their USB port in BOOTSEL mode. From the example's
+directory, with the build settings above, build both ELFs and combine them into
+one UF2. The combined file uses the linked flash addresses and includes the
+erased OTA state page, so a pending swap cannot replace the application on boot.
 
 ```sh
-cd examples/pico-w/bootloader && cargo build --release
-probe-rs download --chip RP2040 ../../target/thumbv6m-none-eabi/release/pico-w-bootloader
-cd .. && cargo run --release          # probe-rs, with the defmt log
+# Pico W. For Pico 2 W set target=thumbv8m.main-none-eabihf and family=rp2350-arm-s.
+target=thumbv6m-none-eabi
+family=rp2040
+board=$(basename "$PWD")
+out="../target/$target/release"
+cargo build --release
+(cd bootloader && cargo build --release)
+picotool uf2 convert "$out/$board-bootloader" -t elf "$out/$board-bootloader.uf2" --family "$family"
+picotool uf2 convert "$out/$board" -t elf "$out/$board-app.uf2" --family "$family"
+picotool uf2 combine "$out/$board-bootloader.uf2" "$out/$board-app.uf2" "$out/$board.uf2"
 ```
 
-For the Pico 2 W use `--chip RP235x` and `thumbv8m.main-none-eabihf/release/pico-2-w-bootloader`;
-for the XIAOs, `--chip nRF54L15` or `--chip nRF54LM20A` and
-`thumbv8m.main-none-eabihf/release/xiao-nrf54l15-bootloader` or `xiao-nrf54lm20a-bootloader`.
+Unplug the board, hold BOOTSEL while plugging in the USB data cable, then
+release BOOTSEL when the drive appears (`RPI-RP2` on Pico W, `RP2350` on Pico 2 W).
+Copy only the combined `$out/$board.uf2` to that drive. The drive disappears and
+the board reboots. Find its address in your router's DHCP leases.
 
-**ESP32, ESP32-C5, ESP32-C6, ESP32-H2, ESP32-S3:** build ESP-IDF's bootloader with rollback once per chip.
+For SWD flashing and defmt logs, connect a debug probe. From the same directory,
+run `probe-rs download --chip RP2040 "$out/$board-bootloader"` (use `RP235x` on
+Pico 2 W), then `cargo run --release` to flash and start the application.
+
+### XIAO nRF54L15 and XIAO nRF54LM20A
+
+From the example's directory, build and flash the bootloader first, then run
+the application:
+
+```sh
+(cd bootloader && cargo build --release)
+probe-rs download --chip nRF54L15 ../target/thumbv8m.main-none-eabihf/release/xiao-nrf54l15-bootloader
+cargo run --release
+```
+
+For the XIAO nRF54LM20A, use `--chip nRF54LM20A` and `xiao-nrf54lm20a-bootloader`.
+
+### ESP32, ESP32-C5, ESP32-C6, ESP32-H2, ESP32-S3
+
+Build ESP-IDF's bootloader with rollback once per chip.
 The example's `espflash.toml` names it, so every flash writes it:
 
 ```sh
@@ -114,9 +144,9 @@ tools/esp-bootloader/build.sh esp32c6 examples/esp32c6/bootloader.bin   # from t
 cd examples/esp32c6 && cargo run --release   # espflash, with --erase-parts otadata
 ```
 
-The log prints the device's addresses once it is on the network. The Thread
-examples also register `mai-ota-XXXXXXXX.local` with the Thread border router's
-SRP server.
+When using the logging runner, the log prints the device's addresses once it is
+on the network. The Thread examples also register `mai-ota-XXXXXXXX.local` with
+the Thread border router's SRP server.
 
 ## 4. Update over the air
 

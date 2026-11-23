@@ -52,8 +52,9 @@ fallback.
 This walks through the Raspberry Pi Pico W. The [examples guide](examples/README.md)
 covers every board, including the ESP32 and nRF54 variants.
 
-You need Rust 1.97 or later, a debug probe, and
-[probe-rs](https://probe.rs). Then install the two host tools and the target:
+You need Rust 1.97 or later, a USB data cable, and
+[picotool](https://github.com/raspberrypi/pico-sdk-tools/releases) 2.3.1 or later.
+Install the two host tools and the target:
 
 ```sh
 rustup target add thumbv6m-none-eabi
@@ -71,17 +72,17 @@ mai-coap --generate-identity client   # client.ccs, client.cosekey
 cd ../pico-w
 ```
 
-Build, then flash the bootloader and the application by wire, once:
+Set the build environment:
 
 ```sh
 export MAI_OTA_DEVICE=$PWD/../.credentials/device
 export MAI_OTA_CLIENT=$PWD/../.credentials/client.ccs
 export WIFI_SSID=… WIFI_PASSWORD=…
-
-(cd bootloader && cargo build --release)
-probe-rs download --chip RP2040 ../target/thumbv6m-none-eabi/release/pico-w-bootloader
-cargo run --release      # flashes and shows the log, including the device's address
 ```
+
+Follow the [Pico USB flashing steps](examples/README.md#pico-w-and-pico-2-w)
+from the `examples/pico-w` directory to install the bootloader and application.
+Find the board's address in your router's DHCP leases.
 
 Change something, rebuild, and update over the air:
 
