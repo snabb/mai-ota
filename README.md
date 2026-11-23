@@ -49,15 +49,15 @@ fallback.
 
 ## Quick start: try an example
 
-This walks through the Raspberry Pi Pico W. The [examples guide](examples/README.md)
-covers every board, including the ESP32 and nRF54 variants.
+Use an ESP32-C6 board with at least 4 MiB of flash, a USB data cable,
+2.4 GHz Wi-Fi, Rust 1.100 or later, and a running Docker daemon. Start in
+the repository root. The [examples guide](examples/README.md) covers the other boards.
 
-You need Rust 1.97 or later, a USB data cable, and
-[picotool](https://github.com/raspberrypi/pico-sdk-tools/releases) 2.3.1 or later.
-Install the two host tools and the target:
+Install the Rust target and the host tools:
 
 ```sh
-rustup target add thumbv6m-none-eabi
+rustup target add riscv32imac-unknown-none-elf
+cargo install --locked espflash
 cargo install --locked --git https://github.com/snabb/mai-coap mai-coap-cli
 cargo install --locked --git https://github.com/snabb/mai-ota mai-ota-cli
 ```
@@ -69,28 +69,35 @@ Make an EDHOC identity for the device and one for the client
 mkdir -p examples/.credentials && cd examples/.credentials
 mai-coap --generate-identity device   # device.ccs, device.cosekey
 mai-coap --generate-identity client   # client.ccs, client.cosekey
-cd ../pico-w
+cd ../esp32c6
 ```
 
-Set the build environment:
+Set your Wi-Fi credentials, build the rollback-enabled ESP-IDF bootloader,
+and connect the board by USB. Then build and flash the example:
 
 ```sh
-export MAI_OTA_DEVICE=$PWD/../.credentials/device
-export MAI_OTA_CLIENT=$PWD/../.credentials/client.ccs
-export WIFI_SSID=… WIFI_PASSWORD=…
+export MAI_OTA_DEVICE="$PWD/../.credentials/device"
+export MAI_OTA_CLIENT="$PWD/../.credentials/client.ccs"
+export WIFI_SSID='your-ssid' WIFI_PASSWORD='your-password'
+../../tools/esp-bootloader/build.sh esp32c6 bootloader.bin
+cargo run --release
 ```
 
-Follow the [Pico USB flashing steps](examples/README.md#pico-w-and-pico-2-w)
-from the `examples/pico-w` directory to install the bootloader and application.
-Find the board's address in your router's DHCP leases.
+`cargo run` uses `espflash` to write the bootloader, partition table, and
+application, clears the OTA state, and opens the serial monitor. Note the IPv4
+address printed after the board joins Wi-Fi, then press Ctrl+C to exit the monitor.
 
-Change something, rebuild, and update over the air:
+Touch the example source to force Cargo to build a new firmware version, then
+upload it over the air. Replace the example IP address with the one from the
+monitor:
 
 ```sh
+touch ../esp/main.rs
 cargo build --release
 K=../.credentials
-mai-ota --identity $K/client.ccs --key $K/client.cosekey --peer $K/device.ccs \
-  upload <address> ../target/thumbv6m-none-eabi/release/pico-w
+DEVICE_ADDR=192.0.2.10
+mai-ota --identity "$K/client.ccs" --key "$K/client.cosekey" --peer "$K/device.ccs" \
+  upload "$DEVICE_ADDR" ../target/riscv32imac-unknown-none-elf/release/esp32c6-example
 ```
 
 The CLI exits 0 once the new version answered and is confirmed. To see a
